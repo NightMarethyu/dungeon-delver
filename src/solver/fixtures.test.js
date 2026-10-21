@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { loadDungeon } from '../model/load.js'
 import { EXPECTED } from './__fixtures__/expected.js'
+import { solve } from './solve.js'
 
 const dir = new URL('./__fixtures__/', import.meta.url)
 const fixtures = readdirSync(dir)
@@ -29,6 +30,20 @@ describe('solver fixtures', () => {
       expect(expected.softlocks.flat().filter((id) => !edges.has(id))).toEqual([])
     })
 
-    it.todo('matches the expected solver results')
+    it('matches the expected solver results', () => {
+      const result = solve(dungeon)
+      expect(result.status).toBe('ok')
+      expect({
+        beatable: result.beatable,
+        softlocks: result.softlocks.map((s) => s.choices.map((c) => c.edge)),
+        unreachableRooms: [...result.unreachableRooms].sort(),
+        optionalRooms: [...result.optionalRooms].sort(),
+        criticalPath: result.criticalPath,
+      }).toEqual({
+        ...expected,
+        unreachableRooms: [...expected.unreachableRooms].sort(),
+        optionalRooms: [...expected.optionalRooms].sort(),
+      })
+    })
   })
 })
