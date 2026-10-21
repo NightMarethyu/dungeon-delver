@@ -8,7 +8,7 @@ The JSDoc types are in [`dungeon.js`](dungeon.js). Load saved or shared JSON wit
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "name": "Example Dungeon",
   "floors": [{ "id": "1F", "name": "Ground Floor" }],
   "rooms": [
@@ -32,6 +32,7 @@ The JSDoc types are in [`dungeon.js`](dungeon.js). Load saved or shared JSON wit
 | `floors[]` | `{ id, name }`. | `[]` |
 | `rooms[]` | `{ id, floor, label, contents, rect? }`. | `label` = `id`, `contents` = `[]` |
 | `rooms[].rect` | `{ x, y, w, h }` in grid units. Only the map view uses it. Optional. | Left out |
+| `rooms[].graphPos` | `{ x, y }` in pixels. Only the graph editor uses it; rooms without one are laid out on a grid. Optional. Added in version 2. | Left out |
 | `edges[]` | `{ id, from, to, kind, gate, oneWay }`. | `kind` = `"door"`, `gate` = open, `oneWay` = `false` |
 | `start`, `goal` | Room ids. | `null` |
 
@@ -60,6 +61,7 @@ Each problem is `{ severity, code, message, ids }`. `ids` lists the rooms, edges
 | `duplicateFloorId`, `duplicateRoomId`, `duplicateEdgeId` | warning | Two things share an id |
 | `unknownFloor` | warning | A room's floor doesn't exist |
 | `invalidRect` | warning | A room's `rect` isn't four numbers with positive size |
+| `invalidGraphPos` | warning | A room's `graphPos` isn't two numbers |
 | `edgeMissingRoom` | warning | An edge's `from` or `to` room doesn't exist |
 | `selfLoop` | warning | An edge connects a room to itself |
 | `unknownEdgeKind` | warning | An edge has an unknown `kind` |

@@ -32,6 +32,10 @@ function isValidRect(rect) {
   return ['x', 'y', 'w', 'h'].every((k) => Number.isFinite(rect[k])) && rect.w > 0 && rect.h > 0
 }
 
+function isValidPoint(point) {
+  return Number.isFinite(point?.x) && Number.isFinite(point?.y)
+}
+
 /** @param {import('./dungeon.js').Dungeon} dungeon */
 export function validateDungeon(dungeon) {
   const problems = []
@@ -58,6 +62,9 @@ export function validateDungeon(dungeon) {
     }
     if (room.rect !== undefined && !isValidRect(room.rect)) {
       problems.push(problem('warning', 'invalidRect', `${where} has an invalid map rectangle.`, [room.id]))
+    }
+    if (room.graphPos !== undefined && !isValidPoint(room.graphPos)) {
+      problems.push(problem('warning', 'invalidGraphPos', `${where} has an invalid graph position.`, [room.id]))
     }
     for (const content of room.contents) {
       checkNamed(content, CONTENT_TYPES, `Something in ${where.toLowerCase()}`, 'Content', problems, [room.id])

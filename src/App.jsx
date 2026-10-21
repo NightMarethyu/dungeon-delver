@@ -1,13 +1,23 @@
-// Placeholder page until the graph editor lands in Phase 2.
+import { useState } from 'react'
+import GraphEditor from './components/graph/GraphEditor.jsx'
+import SidePanel from './components/panels/SidePanel.jsx'
+import { emptyDungeon } from './model/dungeon.js'
+
 export default function App() {
+  const [dungeon, setDungeon] = useState(emptyDungeon)
+  // What's selected on the canvas: { kind: 'room' | 'edge', id } or null.
+  const [selection, setSelection] = useState(null)
+
   return (
-    <main className="placeholder">
-      <h1>Dungeon Delver</h1>
-      <p>
-        Sketch how a dungeon&apos;s rooms connect and what locks each door, and find
-        out whether it can be beaten or softlocked.
-      </p>
-      <p className="muted">Under construction.</p>
-    </main>
+    <div className="app">
+      <header className="app-header">
+        <h1>Dungeon Delver</h1>
+        <p className="muted">Sketch how your dungeon&apos;s rooms connect and what locks each door.</p>
+      </header>
+      <main className="workspace">
+        <GraphEditor dungeon={dungeon} onChange={setDungeon} selection={selection} onSelect={setSelection} />
+        <SidePanel dungeon={dungeon} selection={selection} onChange={setDungeon} onSelect={setSelection} />
+      </main>
+    </div>
   )
 }

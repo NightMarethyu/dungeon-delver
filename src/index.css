@@ -1,7 +1,18 @@
 :root {
   --bg: #f6f4ef;
+  --surface: #ffffff;
   --text: #1d2330;
   --muted: #5d6475;
+  --border: #d9d5cc;
+  --accent: #2f6f5e;
+  --accent-text: #ffffff;
+  --danger: #b3261e;
+  --selected: #d08a14;
+  /* One color per gate and content type, shared by edges, arrows, and chips. */
+  --gate-open: #7a8090;
+  --gate-smallKey: #b7791f;
+  --gate-bigKey: #b3261e;
+  --gate-item: #2b6cb0;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
   background: var(--bg);
@@ -10,8 +21,18 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #121218;
+    --surface: #1c1c24;
     --text: #e8e6e1;
     --muted: #9aa0ad;
+    --border: #353542;
+    --accent: #4fae93;
+    --accent-text: #0d1512;
+    --danger: #ef6b62;
+    --selected: #f0b23e;
+    --gate-open: #8d93a3;
+    --gate-smallKey: #e0a43a;
+    --gate-bigKey: #ef6b62;
+    --gate-item: #6aa8ef;
   }
 }
 
@@ -20,12 +41,347 @@ body {
   background: var(--bg);
 }
 
-.placeholder {
-  max-width: 40rem;
-  margin: 0 auto;
-  padding: 4rem 1rem;
-}
-
 .muted {
   color: var(--muted);
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 6px;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--muted);
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+button.danger {
+  color: var(--danger);
+}
+
+button.icon {
+  padding: 0.1rem 0.5rem;
+}
+
+input,
+select {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  min-width: 0;
+}
+
+/* Layout: header on top, then the canvas with the side panel to its right. */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.app-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-header h1 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.app-header p {
+  margin: 0;
+}
+
+.workspace {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 20rem;
+}
+
+.graph-canvas {
+  min-height: 0;
+}
+
+.side-panel {
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+@media (max-width: 760px) {
+  .app {
+    height: auto;
+  }
+
+  .app-header {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .graph-canvas {
+    height: 65vh;
+  }
+
+  .side-panel {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* Side panel */
+
+.side-panel h2 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.field > span {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.check {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.contents {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.contents legend {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.contents p {
+  margin: 0;
+}
+
+.content-row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.content-row .item-name {
+  flex: 1;
+  width: 0;
+}
+
+.add-contents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.add-contents button {
+  font-size: 0.85rem;
+  padding: 0.2rem 0.5rem;
+}
+
+.edge-ends {
+  margin: 0;
+  font-weight: 600;
+}
+
+.help {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  line-height: 1.4;
+}
+
+/* Graph canvas */
+
+.canvas-hint {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+  color: var(--muted);
+}
+
+.room-node {
+  min-width: 7.5rem;
+  max-width: 13rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+}
+
+.room-node.selected {
+  border-color: var(--selected);
+}
+
+.room-label {
+  font-weight: 600;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.room-rename {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.1rem 0.3rem;
+}
+
+.room-contents {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.chip {
+  font-size: 0.72rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  border: 1px solid currentcolor;
+}
+
+.chip-smallKey {
+  color: var(--gate-smallKey);
+}
+
+.chip-bigKey {
+  color: var(--gate-bigKey);
+}
+
+.chip-item {
+  color: var(--gate-item);
+}
+
+/* Connection dots: faint until you hover the room. */
+.room-handle.react-flow__handle {
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  opacity: 0.25;
+}
+
+.room-node:hover .room-handle,
+.react-flow__handle.connectingto,
+.react-flow__handle.connectingfrom {
+  opacity: 1;
+}
+
+/* Edges take their gate's color, selected or not, through React Flow's variables. */
+.react-flow__edge {
+  --xy-edge-stroke-width: 2.5;
+  --gate-color: var(--gate-open);
+  --xy-edge-stroke: var(--gate-color);
+  --xy-edge-stroke-selected: var(--gate-color);
+}
+
+.react-flow__edge.gate-smallKey {
+  --gate-color: var(--gate-smallKey);
+}
+
+.react-flow__edge.gate-bigKey {
+  --gate-color: var(--gate-bigKey);
+}
+
+.react-flow__edge.gate-item {
+  --gate-color: var(--gate-item);
+}
+
+.react-flow .react-flow__edge.kind-drop .react-flow__edge-path {
+  stroke-dasharray: 8 5;
+}
+
+.react-flow .react-flow__edge.kind-stairs .react-flow__edge-path {
+  stroke-dasharray: 2 4;
+  stroke-linecap: round;
+}
+
+.react-flow .react-flow__edge.kind-passage .react-flow__edge-path {
+  stroke-dasharray: 14 4 2 4;
+}
+
+.react-flow__edge.selected {
+  --xy-edge-stroke-width: 4;
+}
+
+.react-flow .react-flow__edge.selected .react-flow__edge-path {
+  filter: drop-shadow(0 0 3px var(--selected));
+}
+
+.edge-label {
+  position: absolute;
+  pointer-events: none;
+  font-size: 0.72rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid currentcolor;
+  white-space: nowrap;
+}
+
+.edge-label.gate-open {
+  color: var(--gate-open);
+}
+
+.edge-label.gate-smallKey {
+  color: var(--gate-smallKey);
+}
+
+.edge-label.gate-bigKey {
+  color: var(--gate-bigKey);
+}
+
+.edge-label.gate-item {
+  color: var(--gate-item);
 }
