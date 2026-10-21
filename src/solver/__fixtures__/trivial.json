@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "name": "Trivial",
+  "floors": [
+    {
+      "id": "1F",
+      "name": "Ground Floor"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "start",
+      "floor": "1F",
+      "label": "Entrance",
+      "contents": []
+    },
+    {
+      "id": "goal",
+      "floor": "1F",
+      "label": "Boss Room",
+      "contents": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "start",
+      "to": "goal",
+      "kind": "door",
+      "gate": {
+        "type": "open"
+      }
+    }
+  ],
+  "start": "start",
+  "goal": "goal"
+}

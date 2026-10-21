@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "name": "Two Floors",
+  "floors": [
+    {
+      "id": "B1",
+      "name": "Basement"
+    },
+    {
+      "id": "1F",
+      "name": "Ground Floor"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "start",
+      "floor": "1F",
+      "label": "Entrance",
+      "contents": [
+        {
+          "type": "smallKey"
+        }
+      ]
+    },
+    {
+      "id": "upStairs",
+      "floor": "1F",
+      "label": "Stairwell",
+      "contents": []
+    },
+    {
+      "id": "downStairs",
+      "floor": "B1",
+      "label": "Basement Stairwell",
+      "contents": [
+        {
+          "type": "smallKey"
+        }
+      ]
+    },
+    {
+      "id": "goal",
+      "floor": "B1",
+      "label": "Boss Room",
+      "contents": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "start",
+      "to": "upStairs",
+      "kind": "door",
+      "gate": {
+        "type": "smallKey"
+      }
+    },
+    {
+      "id": "stairs",
+      "from": "upStairs",
+      "to": "downStairs",
+      "kind": "stairs",
+      "gate": {
+        "type": "open"
+      }
+    },
+    {
+      "id": "e2",
+      "from": "downStairs",
+      "to": "goal",
+      "kind": "door",
+      "gate": {
+        "type": "smallKey"
+      }
+    }
+  ],
+  "start": "start",
+  "goal": "goal"
+}

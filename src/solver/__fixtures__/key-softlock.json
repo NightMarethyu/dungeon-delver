@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "name": "Key Softlock",
+  "floors": [
+    {
+      "id": "1F",
+      "name": "Ground Floor"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "start",
+      "floor": "1F",
+      "label": "Entrance",
+      "contents": [
+        {
+          "type": "smallKey"
+        }
+      ]
+    },
+    {
+      "id": "dead",
+      "floor": "1F",
+      "label": "Dead End",
+      "contents": []
+    },
+    {
+      "id": "keyRoom",
+      "floor": "1F",
+      "label": "Key Room",
+      "contents": [
+        {
+          "type": "smallKey"
+        }
+      ]
+    },
+    {
+      "id": "goal",
+      "floor": "1F",
+      "label": "Boss Room",
+      "contents": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "toDead",
+      "from": "start",
+      "to": "dead",
+      "kind": "door",
+      "gate": {
+        "type": "smallKey"
+      }
+    },
+    {
+      "id": "toKeyRoom",
+      "from": "start",
+      "to": "keyRoom",
+      "kind": "door",
+      "gate": {
+        "type": "smallKey"
+      }
+    },
+    {
+      "id": "toGoal",
+      "from": "keyRoom",
+      "to": "goal",
+      "kind": "door",
+      "gate": {
+        "type": "open"
+      }
+    }
+  ],
+  "start": "start",
+  "goal": "goal"
+}

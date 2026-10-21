@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "name": "Unbeatable",
+  "floors": [
+    {
+      "id": "1F",
+      "name": "Ground Floor"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "start",
+      "floor": "1F",
+      "label": "Entrance",
+      "contents": []
+    },
+    {
+      "id": "bigChest",
+      "floor": "1F",
+      "label": "Big Chest Room",
+      "contents": [
+        {
+          "type": "bigKey"
+        }
+      ]
+    },
+    {
+      "id": "goal",
+      "floor": "1F",
+      "label": "Boss Room",
+      "contents": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "toBigChest",
+      "from": "start",
+      "to": "bigChest",
+      "kind": "door",
+      "gate": {
+        "type": "bigKey"
+      }
+    },
+    {
+      "id": "toGoal",
+      "from": "start",
+      "to": "goal",
+      "kind": "door",
+      "gate": {
+        "type": "bigKey"
+      }
+    }
+  ],
+  "start": "start",
+  "goal": "goal"
+}
