@@ -4,7 +4,7 @@ import { thingText } from '../labels.js'
 
 const SIDES = [Position.Top, Position.Right, Position.Bottom, Position.Left]
 const ROLE_TAGS = { start: '▶ Start', goal: '★ Goal' }
-const MARK_TAGS = { optional: 'Optional', unreachable: 'Unreachable' }
+const MARK_TAGS = { optional: 'Optional', unreachable: 'Unreachable', stuck: 'Stuck' }
 
 // A room on the graph canvas. Double-click the name to rename it. The dots on
 // each side start a connection; with connectionMode "loose" any dot can end one.

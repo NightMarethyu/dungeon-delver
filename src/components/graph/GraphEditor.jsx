@@ -30,7 +30,8 @@ const HALF_ROOM = { x: 60, y: 22 }
  *   onChange: (update: (d: import('../../model/dungeon.js').Dungeon) => import('../../model/dungeon.js').Dungeon) => void,
  *   selection: { kind: 'room' | 'edge', id: string } | null,
  *   onSelect: React.Dispatch<React.SetStateAction<{ kind: 'room' | 'edge', id: string } | null>>,
- *   highlights: { rooms: Map<string, 'path' | 'optional' | 'unreachable'>, edges: Set<string> },
+ *   highlights: { rooms: Map<string, string>, edges: Map<string, string> },
+ *     a mark per room and a CSS class per connection, from results.js
  * }} props
  */
 function Canvas({ dungeon, onChange, selection, onSelect, highlights }) {
@@ -67,7 +68,7 @@ function Canvas({ dungeon, onChange, selection, onSelect, highlights }) {
         source: edge.from,
         target: edge.to,
         selected: selection?.kind === 'edge' && selection.id === edge.id,
-        className: `gate-${edge.gate.type} kind-${edge.kind}${highlights.edges.has(edge.id) ? ' on-path' : ''}`,
+        className: `gate-${edge.gate.type} kind-${edge.kind}${highlights.edges.has(edge.id) ? ` ${highlights.edges.get(edge.id)}` : ''}`,
         markerEnd: edge.oneWay ? { type: MarkerType.ArrowClosed, width: 18, height: 18, color: `var(--gate-${edge.gate.type})` } : undefined,
         data: { edge },
       })),
