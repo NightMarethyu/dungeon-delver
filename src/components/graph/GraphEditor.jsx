@@ -30,27 +30,34 @@ const HALF_ROOM = { x: 60, y: 22 }
  *   onChange: (update: (d: import('../../model/dungeon.js').Dungeon) => import('../../model/dungeon.js').Dungeon) => void,
  *   selection: { kind: 'room' | 'edge', id: string } | null,
  *   onSelect: React.Dispatch<React.SetStateAction<{ kind: 'room' | 'edge', id: string } | null>>,
+ *   highlights: { rooms: Map<string, 'path' | 'optional' | 'unreachable'>, edges: Set<string> },
  * }} props
  */
-function Canvas({ dungeon, onChange, selection, onSelect }) {
+function Canvas({ dungeon, onChange, selection, onSelect, highlights }) {
   const wrapper = useRef(null)
   const { screenToFlowPosition } = useReactFlow()
   // React Flow measures each node after it renders. Keep those sizes, since
   // nodes rebuilt without them would be measured again from scratch.
   const [sizes, setSizes] = useState({})
 
-  const nodes = useMemo(
-    () =>
-      dungeon.rooms.map((room) => ({
-        id: room.id,
-        type: 'room',
-        position: room.graphPos ?? { x: 0, y: 0 },
-        measured: sizes[room.id],
-        selected: selection?.kind === 'room' && selection.id === room.id,
-        data: { room, onRename: (label) => onChange((d) => updateRoom(d, room.id, { label })) },
-      })),
-    [dungeon.rooms, sizes, selection, onChange],
-  )
+  const nodes = useMemo(() => {
+    // Only name each room's floor when there's more than one.
+    const floorNames = dungeon.floors.length > 1 ? new Map(dungeon.floors.map((f) => [f.id, f.name])) : null
+    return dungeon.rooms.map((room) => ({
+      id: room.id,
+      type: 'room',
+      position: room.graphPos ?? { x: 0, y: 0 },
+      measured: sizes[room.id],
+      selected: selection?.kind === 'room' && selection.id === room.id,
+      data: {
+        room,
+        role: room.id === dungeon.start ? 'start' : room.id === dungeon.goal ? 'goal' : null,
+        mark: highlights.rooms.get(room.id) ?? null,
+        floorName: floorNames && (floorNames.get(room.floor) ?? room.floor),
+        onRename: (label) => onChange((d) => updateRoom(d, room.id, { label })),
+      },
+    }))
+  }, [dungeon.rooms, dungeon.floors, dungeon.start, dungeon.goal, highlights, sizes, selection, onChange])
 
   const edges = useMemo(
     () =>
@@ -60,11 +67,11 @@ function Canvas({ dungeon, onChange, selection, onSelect }) {
         source: edge.from,
         target: edge.to,
         selected: selection?.kind === 'edge' && selection.id === edge.id,
-        className: `gate-${edge.gate.type} kind-${edge.kind}`,
+        className: `gate-${edge.gate.type} kind-${edge.kind}${highlights.edges.has(edge.id) ? ' on-path' : ''}`,
         markerEnd: edge.oneWay ? { type: MarkerType.ArrowClosed, width: 18, height: 18, color: `var(--gate-${edge.gate.type})` } : undefined,
         data: { edge },
       })),
-    [dungeon.edges, selection],
+    [dungeon.edges, highlights, selection],
   )
 
   const handleChanges = useCallback(

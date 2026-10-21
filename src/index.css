@@ -13,6 +13,13 @@
   --gate-smallKey: #b7791f;
   --gate-bigKey: #b3261e;
   --gate-item: #2b6cb0;
+  /* Solver results: banner tones and room highlights. */
+  --good: #2f7d4f;
+  --warn: #b7791f;
+  --bad: #b3261e;
+  --info: #2b6cb0;
+  --path: #2f9e6e;
+  --unreachable: #b3261e;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
   background: var(--bg);
@@ -33,6 +40,12 @@
     --gate-smallKey: #e0a43a;
     --gate-bigKey: #ef6b62;
     --gate-item: #6aa8ef;
+    --good: #5cc48a;
+    --warn: #e0a43a;
+    --bad: #ef6b62;
+    --info: #6aa8ef;
+    --path: #4fd19a;
+    --unreachable: #ef6b62;
   }
 }
 
@@ -120,7 +133,14 @@ select {
   grid-template-columns: 1fr 20rem;
 }
 
+.canvas-column {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .graph-canvas {
+  flex: 1;
   min-height: 0;
 }
 
@@ -150,6 +170,7 @@ select {
   }
 
   .graph-canvas {
+    flex: none;
     height: 65vh;
   }
 
@@ -256,10 +277,6 @@ select {
   border: 2px solid var(--border);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
-}
-
-.room-node.selected {
-  border-color: var(--selected);
 }
 
 .room-label {
@@ -384,4 +401,193 @@ select {
 
 .edge-label.gate-item {
   color: var(--gate-item);
+}
+
+/* Start, goal, floor, and solver tags on rooms */
+
+.room-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 0.3rem;
+}
+
+.tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.02rem 0.4rem;
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--muted);
+}
+
+.tag-start,
+.tag-goal {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.tag-unreachable {
+  background: var(--unreachable);
+  color: var(--surface);
+}
+
+.room-node.mark-path {
+  border-color: var(--path);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--path) 25%, transparent);
+}
+
+.room-node.mark-optional {
+  opacity: 0.55;
+}
+
+.room-node.mark-unreachable {
+  border-style: dashed;
+  border-color: var(--unreachable);
+}
+
+/* The selection outline wins over the solver's. */
+.room-node.selected {
+  border-color: var(--selected);
+}
+
+.react-flow__edge.on-path .react-flow__edge-path {
+  filter: drop-shadow(0 0 4px var(--path));
+}
+
+/* Results banner */
+
+.results-banner {
+  --tone: var(--info);
+  border-bottom: 1px solid var(--border);
+  border-left: 5px solid var(--tone);
+  background: var(--surface);
+  padding: 0.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.results-banner.tone-good {
+  --tone: var(--good);
+}
+
+.results-banner.tone-warn {
+  --tone: var(--warn);
+}
+
+.results-banner.tone-bad {
+  --tone: var(--bad);
+}
+
+.banner-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+}
+
+.banner-icon {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  background: var(--tone);
+  color: var(--surface);
+}
+
+.banner-text {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.banner-text strong {
+  color: var(--tone);
+}
+
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.swatch {
+  width: 0.9rem;
+  height: 0.65rem;
+  border-radius: 3px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+}
+
+.swatch-path {
+  border-color: var(--path);
+}
+
+.swatch-optional {
+  opacity: 0.55;
+}
+
+.swatch-unreachable {
+  border-style: dashed;
+  border-color: var(--unreachable);
+}
+
+.banner-details summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.softlocks,
+.warnings {
+  margin: 0.3rem 0 0.2rem;
+  padding-left: 1.4rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  max-height: 9rem;
+  overflow-y: auto;
+}
+
+/* Dungeon panel */
+
+.endpoints {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.floors .floor-count {
+  align-self: center;
+  min-width: 1.2rem;
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+.floors .hint {
+  font-size: 0.8rem;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.help-box summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
 }

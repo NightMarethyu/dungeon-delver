@@ -81,3 +81,50 @@ export function itemNames(dungeon) {
   for (const edge of dungeon.edges) if (edge.gate.type === 'item' && edge.gate.name) names.add(edge.gate.name)
   return [...names].sort()
 }
+
+// Sets the start or goal room (`which` is 'start' or 'goal'), or clears it with
+// null. A room can't be both, so making the start room the goal clears the start.
+export function setEndpoint(dungeon, which, id) {
+  const other = which === 'start' ? 'goal' : 'start'
+  return { ...dungeon, [which]: id, [other]: id != null && dungeon[other] === id ? null : dungeon[other] }
+}
+
+/**
+ * Adds a floor at the end of the list.
+ * @returns {{ dungeon: import('./dungeon.js').Dungeon, id: string }}
+ */
+export function addFloor(dungeon, name) {
+  const id = nextId('f', dungeon.floors)
+  const floor = { id, name: name ?? `Floor ${dungeon.floors.length + 1}` }
+  return { dungeon: { ...dungeon, floors: [...dungeon.floors, floor] }, id }
+}
+
+export function renameFloor(dungeon, id, name) {
+  return { ...dungeon, floors: dungeon.floors.map((f) => (f.id === id ? { ...f, name } : f)) }
+}
+
+// Moves a floor one place up (-1) or down (+1) the list.
+export function moveFloor(dungeon, id, by) {
+  const i = dungeon.floors.findIndex((f) => f.id === id)
+  const j = i + by
+  if (i < 0 || j < 0 || j >= dungeon.floors.length) return dungeon
+  const floors = [...dungeon.floors]
+  ;[floors[i], floors[j]] = [floors[j], floors[i]]
+  return { ...dungeon, floors }
+}
+
+// Removes a floor and moves its rooms to the floor listed before it (or after
+// it, for the first floor). The last floor can't be removed.
+export function removeFloor(dungeon, id) {
+  const i = dungeon.floors.findIndex((f) => f.id === id)
+  if (i < 0 || dungeon.floors.length === 1) return dungeon
+  const floors = dungeon.floors.toSpliced(i, 1)
+  const fallback = floors[Math.max(0, i - 1)].id
+  return {
+    ...dungeon,
+    floors,
+    rooms: dungeon.rooms.map((r) => (r.floor === id ? { ...r, floor: fallback } : r)),
+  }
+}
+
+export const renameDungeon = (dungeon, name) => ({ ...dungeon, name })

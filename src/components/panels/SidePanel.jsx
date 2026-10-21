@@ -1,5 +1,18 @@
 import { CONTENT_TYPES, EDGE_KINDS, GATE_TYPES } from '../../model/dungeon.js'
-import { itemNames, removeEdge, removeRoom, reverseEdge, updateEdge, updateRoom } from '../../model/edit.js'
+import {
+  addFloor,
+  itemNames,
+  moveFloor,
+  removeEdge,
+  removeFloor,
+  removeRoom,
+  renameDungeon,
+  renameFloor,
+  reverseEdge,
+  setEndpoint,
+  updateEdge,
+  updateRoom,
+} from '../../model/edit.js'
 import { CONTENT_LABELS, GATE_LABELS, KIND_LABELS } from '../labels.js'
 
 const ITEM_LIST_ID = 'known-items'
@@ -58,6 +71,18 @@ function RoomPanel({ room, dungeon, onChange, onSelect }) {
           ))}
         </select>
       </label>
+      <div className="endpoints" role="group" aria-label="Start and goal">
+        {[['start', '▶ Start room'], ['goal', '★ Goal room']].map(([which, label]) => (
+          <label key={which} className="check">
+            <input
+              type="checkbox"
+              checked={dungeon[which] === room.id}
+              onChange={(e) => onChange((d) => setEndpoint(d, which, e.target.checked ? room.id : null))}
+            />
+            {label}
+          </label>
+        ))}
+      </div>
 
       <fieldset className="contents">
         <legend>Contents</legend>
@@ -164,18 +189,105 @@ function EdgePanel({ edge, dungeon, onChange, onSelect }) {
   )
 }
 
-function Help() {
+function RoomSelect({ label, value, rooms, onChange }) {
+  return (
+    <label className="field">
+      <span>{label}</span>
+      <select value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}>
+        <option value="">Not set</option>
+        {rooms.map((r) => (
+          <option key={r.id} value={r.id}>{r.label}</option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
+function FloorList({ dungeon, onChange }) {
+  const { floors } = dungeon
+  const roomCount = (id) => dungeon.rooms.filter((r) => r.floor === id).length
+
+  return (
+    <fieldset className="contents floors">
+      <legend>Floors</legend>
+      {floors.map((floor, i) => {
+        const count = roomCount(floor.id)
+        // Rooms on a removed floor move to the one above it in the list.
+        const moveTo = floors[i === 0 ? 1 : i - 1]
+        return (
+          <div className="content-row" key={floor.id}>
+            <input
+              className="item-name"
+              aria-label="Floor name"
+              value={floor.name}
+              onChange={(e) => onChange((d) => renameFloor(d, floor.id, e.target.value))}
+            />
+            <span className="muted floor-count" title={`${count} ${count === 1 ? 'room' : 'rooms'}`}>{count}</span>
+            <button type="button" className="icon" aria-label="Move up" title="Move up" disabled={i === 0} onClick={() => onChange((d) => moveFloor(d, floor.id, -1))}>
+              ↑
+            </button>
+            <button
+              type="button"
+              className="icon"
+              aria-label="Move down"
+              title="Move down"
+              disabled={i === floors.length - 1}
+              onClick={() => onChange((d) => moveFloor(d, floor.id, 1))}
+            >
+              ↓
+            </button>
+            <button
+              type="button"
+              className="icon"
+              aria-label="Remove floor"
+              title={floors.length === 1 ? "A dungeon needs at least one floor" : count > 0 ? `Remove (its rooms move to ${moveTo.name})` : 'Remove'}
+              disabled={floors.length === 1}
+              onClick={() => onChange((d) => removeFloor(d, floor.id))}
+            >
+              ×
+            </button>
+          </div>
+        )
+      })}
+      <div className="add-contents">
+        <button type="button" onClick={() => onChange((d) => addFloor(d).dungeon)}>
+          + Floor
+        </button>
+      </div>
+      <p className="muted hint">Pick a room&apos;s floor when it&apos;s selected.</p>
+    </fieldset>
+  )
+}
+
+function DungeonPanel({ dungeon, onChange }) {
   return (
     <>
-      <h2>Build your dungeon</h2>
+      <h2>Dungeon</h2>
+      <label className="field">
+        <span>Name</span>
+        <input value={dungeon.name} onChange={(e) => onChange((d) => renameDungeon(d, e.target.value))} />
+      </label>
+      <RoomSelect label="▶ Start room" value={dungeon.start} rooms={dungeon.rooms} onChange={(id) => onChange((d) => setEndpoint(d, 'start', id))} />
+      <RoomSelect label="★ Goal room" value={dungeon.goal} rooms={dungeon.rooms} onChange={(id) => onChange((d) => setEndpoint(d, 'goal', id))} />
+      <FloorList dungeon={dungeon} onChange={onChange} />
+      <Help />
+    </>
+  )
+}
+
+function Help() {
+  return (
+    <details className="help-box" open>
+      <summary>How to build a dungeon</summary>
       <ul className="help">
         <li><strong>Add a room</strong> with the button, or double-click empty space.</li>
         <li><strong>Connect rooms</strong> by dragging from the dot on a room&apos;s edge to another room.</li>
-        <li><strong>Select</strong> a room or connection to edit it here.</li>
+        <li><strong>Select</strong> a room or connection to edit it here. Click empty space to come back.</li>
         <li><strong>Rename</strong> a room by double-clicking its name.</li>
         <li><strong>Delete</strong> the selected room or connection with Delete or Backspace.</li>
+        <li><strong>Set a start and goal</strong> and the check above the canvas updates as you edit.</li>
       </ul>
-    </>
+    </details>
   )
 }
 
@@ -195,7 +307,7 @@ export default function SidePanel({ dungeon, selection, onChange, onSelect }) {
 
   return (
     <aside className="side-panel">
-      {room ? <RoomPanel key={room.id} room={room} {...props} /> : edge ? <EdgePanel key={edge.id} edge={edge} {...props} /> : <Help />}
+      {room ? <RoomPanel key={room.id} room={room} {...props} /> : edge ? <EdgePanel key={edge.id} edge={edge} {...props} /> : <DungeonPanel dungeon={dungeon} onChange={onChange} />}
       <datalist id={ITEM_LIST_ID}>
         {itemNames(dungeon).map((n) => (
           <option key={n} value={n} />
