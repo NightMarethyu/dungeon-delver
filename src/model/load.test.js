@@ -33,6 +33,20 @@ describe('loadDungeon', () => {
     expect('rect' in dungeon.rooms[1]).toBe(false)
   })
 
+  it('keeps a room graphPos only when one is given', () => {
+    const graphPos = { x: 120, y: -40 }
+    const { dungeon } = loadDungeon({ ...minimal, rooms: [{ ...minimal.rooms[0], graphPos }, minimal.rooms[1]] })
+    expect(dungeon.rooms[0].graphPos).toEqual(graphPos)
+    expect('graphPos' in dungeon.rooms[1]).toBe(false)
+  })
+
+  it('migrates a version 1 dungeon to the current version', () => {
+    const { dungeon, problems } = loadDungeon(minimal)
+    expect(minimal.version).toBe(1)
+    expect(dungeon.version).toBe(CURRENT_VERSION)
+    expect(problems).toEqual([])
+  })
+
   it('does not change its input', () => {
     const input = structuredClone(minimal)
     loadDungeon(input)

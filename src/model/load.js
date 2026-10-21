@@ -9,7 +9,10 @@ import { validateDungeon } from './validate.js'
 
 // MIGRATIONS[n] turns a version n dungeon into version n + 1.
 // Add one here, and bump CURRENT_VERSION, whenever the format changes.
-const MIGRATIONS = {}
+const MIGRATIONS = {
+  // Version 2 added the optional rooms[].graphPos. Nothing to change.
+  1: (raw) => raw,
+}
 
 const fatal = (code, message) => ({
   dungeon: null,
@@ -31,6 +34,7 @@ function normalize(raw) {
         contents: asArray(r.contents).map((c) => ({ ...c })),
       }
       if (r.rect !== undefined) room.rect = { ...r.rect }
+      if (r.graphPos !== undefined) room.graphPos = { ...r.graphPos }
       return room
     }),
     edges: asArray(raw.edges).map((e) => ({

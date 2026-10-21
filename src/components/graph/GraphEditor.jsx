@@ -1,0 +1,167 @@
+import {
+  Background,
+  ConnectionMode,
+  Controls,
+  MarkerType,
+  Panel,
+  ReactFlow,
+  ReactFlowProvider,
+  useReactFlow,
+} from '@xyflow/react'
+import '@xyflow/react/dist/style.css'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import { addEdge, addRoom, removeEdge, removeRoom, updateRoom } from '../../model/edit.js'
+import DungeonEdge from './DungeonEdge.jsx'
+import { freePosition } from './layout.js'
+import RoomNode from './RoomNode.jsx'
+
+const nodeTypes = { room: RoomNode }
+const edgeTypes = { dungeon: DungeonEdge }
+// Roughly half a new room's size, so a room added at a point is centered on it.
+const HALF_ROOM = { x: 60, y: 22 }
+
+/**
+ * The React Flow canvas. The dungeon is the only source of truth: nodes and
+ * edges are rebuilt from it on every change, and every edit goes back through
+ * the pure functions in model/edit.js.
+ *
+ * @param {{
+ *   dungeon: import('../../model/dungeon.js').Dungeon,
+ *   onChange: (update: (d: import('../../model/dungeon.js').Dungeon) => import('../../model/dungeon.js').Dungeon) => void,
+ *   selection: { kind: 'room' | 'edge', id: string } | null,
+ *   onSelect: React.Dispatch<React.SetStateAction<{ kind: 'room' | 'edge', id: string } | null>>,
+ * }} props
+ */
+function Canvas({ dungeon, onChange, selection, onSelect }) {
+  const wrapper = useRef(null)
+  const { screenToFlowPosition } = useReactFlow()
+  // React Flow measures each node after it renders. Keep those sizes, since
+  // nodes rebuilt without them would be measured again from scratch.
+  const [sizes, setSizes] = useState({})
+
+  const nodes = useMemo(
+    () =>
+      dungeon.rooms.map((room) => ({
+        id: room.id,
+        type: 'room',
+        position: room.graphPos ?? { x: 0, y: 0 },
+        measured: sizes[room.id],
+        selected: selection?.kind === 'room' && selection.id === room.id,
+        data: { room, onRename: (label) => onChange((d) => updateRoom(d, room.id, { label })) },
+      })),
+    [dungeon.rooms, sizes, selection, onChange],
+  )
+
+  const edges = useMemo(
+    () =>
+      dungeon.edges.map((edge) => ({
+        id: edge.id,
+        type: 'dungeon',
+        source: edge.from,
+        target: edge.to,
+        selected: selection?.kind === 'edge' && selection.id === edge.id,
+        className: `gate-${edge.gate.type} kind-${edge.kind}`,
+        markerEnd: edge.oneWay ? { type: MarkerType.ArrowClosed, width: 18, height: 18, color: `var(--gate-${edge.gate.type})` } : undefined,
+        data: { edge },
+      })),
+    [dungeon.edges, selection],
+  )
+
+  const handleChanges = useCallback(
+    (kind, changes) => {
+      // Selection changes come as pairs (deselect the old, select the new) that
+      // can arrive in either order, and across the node and edge handlers. So
+      // only clear the selection if it's still the thing being deselected.
+      const deselect = (id) => onSelect((current) => (current?.kind === kind && current.id === id ? null : current))
+      for (const change of changes) {
+        if (change.type === 'position' && change.position) {
+          const { x, y } = change.position
+          onChange((d) => updateRoom(d, change.id, { graphPos: { x: Math.round(x), y: Math.round(y) } }))
+        } else if (change.type === 'dimensions' && change.dimensions) {
+          setSizes((s) => ({ ...s, [change.id]: change.dimensions }))
+        } else if (change.type === 'remove') {
+          onChange((d) => (kind === 'room' ? removeRoom(d, change.id) : removeEdge(d, change.id)))
+          if (kind === 'room') {
+            setSizes((s) => {
+              const rest = { ...s }
+              delete rest[change.id]
+              return rest
+            })
+          }
+          deselect(change.id)
+        } else if (change.type === 'select') {
+          if (change.selected) onSelect({ kind, id: change.id })
+          else deselect(change.id)
+        }
+      }
+    },
+    [onChange, onSelect],
+  )
+
+  const onConnect = useCallback(
+    ({ source, target }) => {
+      const { dungeon: next, id } = addEdge(dungeon, source, target)
+      if (!id) return
+      onChange(() => next)
+      onSelect({ kind: 'edge', id })
+    },
+    [dungeon, onChange, onSelect],
+  )
+
+  function addRoomAt(point) {
+    const graphPos = freePosition({ x: Math.round(point.x - HALF_ROOM.x), y: Math.round(point.y - HALF_ROOM.y) }, dungeon.rooms)
+    const { dungeon: next, id } = addRoom(dungeon, { graphPos })
+    onChange(() => next)
+    onSelect({ kind: 'room', id })
+  }
+
+  function addRoomInView() {
+    const box = wrapper.current.getBoundingClientRect()
+    addRoomAt(screenToFlowPosition({ x: box.left + box.width / 2, y: box.top + box.height / 2 }))
+  }
+
+  return (
+    <div className="graph-canvas" ref={wrapper}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        onNodesChange={(changes) => handleChanges('room', changes)}
+        onEdgesChange={(changes) => handleChanges('edge', changes)}
+        onConnect={onConnect}
+        onPaneClick={(e) => e.detail === 2 && addRoomAt(screenToFlowPosition({ x: e.clientX, y: e.clientY }))}
+        connectionMode={ConnectionMode.Loose}
+        connectionRadius={40}
+        deleteKeyCode={['Backspace', 'Delete']}
+        multiSelectionKeyCode={null}
+        selectionKeyCode={null}
+        zoomOnDoubleClick={false}
+        colorMode="system"
+        fitView
+        fitViewOptions={{ maxZoom: 1 }}
+      >
+        <Background gap={20} />
+        <Controls showInteractive={false} />
+        <Panel position="top-left">
+          <button type="button" className="primary" onClick={addRoomInView}>
+            + Add room
+          </button>
+        </Panel>
+        {dungeon.rooms.length === 0 && (
+          <Panel position="top-center" className="canvas-hint">
+            Add a room, or double-click empty space, to start your dungeon.
+          </Panel>
+        )}
+      </ReactFlow>
+    </div>
+  )
+}
+
+export default function GraphEditor(props) {
+  return (
+    <ReactFlowProvider>
+      <Canvas {...props} />
+    </ReactFlowProvider>
+  )
+}
