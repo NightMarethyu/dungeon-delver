@@ -1,6 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import { emptyDungeon } from './dungeon.js'
-import { addEdge, addRoom, itemNames, nextId, removeEdge, removeRoom, reverseEdge, updateEdge, updateRoom } from './edit.js'
+import {
+  addEdge,
+  addFloor,
+  addRoom,
+  itemNames,
+  moveFloor,
+  nextId,
+  removeEdge,
+  removeFloor,
+  removeRoom,
+  renameFloor,
+  reverseEdge,
+  setEndpoint,
+  updateEdge,
+  updateRoom,
+} from './edit.js'
 import { validateDungeon } from './validate.js'
 
 // Three rooms, a-b connected; a is start and c is goal.
@@ -81,5 +96,49 @@ describe('itemNames', () => {
     d = updateEdge(d, 'e1', { gate: { type: 'item', name: 'bow' } })
     d = updateRoom(d, 'c', { contents: [{ type: 'item', name: 'hookshot' }] })
     expect(itemNames(d)).toEqual(['bow', 'hookshot'])
+  })
+})
+
+describe('start and goal', () => {
+  it('sets and clears either end', () => {
+    expect(setEndpoint(sample(), 'start', 'b')).toMatchObject({ start: 'b', goal: 'c' })
+    expect(setEndpoint(sample(), 'goal', null)).toMatchObject({ start: 'a', goal: null })
+  })
+
+  it("won't let one room be both", () => {
+    expect(setEndpoint(sample(), 'goal', 'a')).toMatchObject({ start: null, goal: 'a' })
+    expect(setEndpoint(sample(), 'start', 'c')).toMatchObject({ start: 'c', goal: null })
+  })
+})
+
+describe('floors', () => {
+  it('adds a floor with a fresh id', () => {
+    const { dungeon, id } = addFloor(sample())
+    expect(id).toBe('f1')
+    expect(dungeon.floors).toEqual([{ id: '1F', name: 'Ground Floor' }, { id: 'f1', name: 'Floor 2' }])
+  })
+
+  it('renames and reorders floors', () => {
+    let d = addFloor(sample(), 'Basement').dungeon
+    d = renameFloor(d, '1F', 'Lobby')
+    d = moveFloor(d, 'f1', -1)
+    expect(d.floors).toEqual([{ id: 'f1', name: 'Basement' }, { id: '1F', name: 'Lobby' }])
+    expect(moveFloor(d, 'f1', -1)).toBe(d)
+  })
+
+  it("moves a removed floor's rooms to a neighboring floor", () => {
+    let d = addFloor(sample(), 'Basement').dungeon
+    d = updateRoom(d, 'b', { floor: 'f1' })
+    const without2 = removeFloor(d, 'f1')
+    expect(without2.floors.map((f) => f.id)).toEqual(['1F'])
+    expect(without2.rooms.every((r) => r.floor === '1F')).toBe(true)
+    const without1 = removeFloor(d, '1F')
+    expect(without1.rooms.every((r) => r.floor === 'f1')).toBe(true)
+    expect(validateDungeon(without1).filter((p) => p.code === 'unknownFloor')).toEqual([])
+  })
+
+  it("won't remove the last floor", () => {
+    const d = sample()
+    expect(removeFloor(d, '1F')).toBe(d)
   })
 })
