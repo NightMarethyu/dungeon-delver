@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "name": "Optional Rooms",
+  "floors": [
+    {
+      "id": "1F",
+      "name": "Ground Floor"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "start",
+      "floor": "1F",
+      "label": "Entrance",
+      "contents": []
+    },
+    {
+      "id": "rupees",
+      "floor": "1F",
+      "label": "Rupee Room",
+      "contents": [
+        {
+          "type": "item",
+          "name": "rupees"
+        }
+      ]
+    },
+    {
+      "id": "goal",
+      "floor": "1F",
+      "label": "Boss Room",
+      "contents": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "start",
+      "to": "rupees",
+      "kind": "door",
+      "gate": {
+        "type": "open"
+      }
+    },
+    {
+      "id": "e2",
+      "from": "start",
+      "to": "goal",
+      "kind": "door",
+      "gate": {
+        "type": "open"
+      }
+    }
+  ],
+  "start": "start",
+  "goal": "goal"
+}

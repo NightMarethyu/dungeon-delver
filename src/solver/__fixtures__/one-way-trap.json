@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "name": "One-Way Trap",
+  "floors": [
+    {
+      "id": "1F",
+      "name": "Ground Floor"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "start",
+      "floor": "1F",
+      "label": "Entrance",
+      "contents": []
+    },
+    {
+      "id": "hub",
+      "floor": "1F",
+      "label": "Hub",
+      "contents": []
+    },
+    {
+      "id": "pit",
+      "floor": "1F",
+      "label": "Pit",
+      "contents": []
+    },
+    {
+      "id": "goal",
+      "floor": "1F",
+      "label": "Boss Room",
+      "contents": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "start",
+      "to": "hub",
+      "kind": "door",
+      "gate": {
+        "type": "open"
+      }
+    },
+    {
+      "id": "drop",
+      "from": "hub",
+      "to": "pit",
+      "kind": "drop",
+      "gate": {
+        "type": "open"
+      },
+      "oneWay": true
+    },
+    {
+      "id": "e2",
+      "from": "hub",
+      "to": "goal",
+      "kind": "door",
+      "gate": {
+        "type": "open"
+      }
+    }
+  ],
+  "start": "start",
+  "goal": "goal"
+}

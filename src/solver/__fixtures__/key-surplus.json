@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "name": "Key Surplus",
+  "floors": [
+    {
+      "id": "1F",
+      "name": "Ground Floor"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "start",
+      "floor": "1F",
+      "label": "Entrance",
+      "contents": [
+        {
+          "type": "smallKey"
+        },
+        {
+          "type": "smallKey"
+        },
+        {
+          "type": "smallKey"
+        }
+      ]
+    },
+    {
+      "id": "closet",
+      "floor": "1F",
+      "label": "Key Closet",
+      "contents": [
+        {
+          "type": "smallKey"
+        }
+      ]
+    },
+    {
+      "id": "mid",
+      "floor": "1F",
+      "label": "Middle Room",
+      "contents": []
+    },
+    {
+      "id": "goal",
+      "floor": "1F",
+      "label": "Boss Room",
+      "contents": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "start",
+      "to": "closet",
+      "kind": "door",
+      "gate": {
+        "type": "open"
+      }
+    },
+    {
+      "id": "d1",
+      "from": "start",
+      "to": "mid",
+      "kind": "door",
+      "gate": {
+        "type": "smallKey"
+      }
+    },
+    {
+      "id": "d2",
+      "from": "mid",
+      "to": "goal",
+      "kind": "door",
+      "gate": {
+        "type": "smallKey"
+      }
+    }
+  ],
+  "start": "start",
+  "goal": "goal"
+}
