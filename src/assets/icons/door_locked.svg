@@ -1,19 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1080 1080">
-  <defs>
-    <style>
-      .cls-1{fill:#8c6239;stroke:#000000;stroke-width:35;stroke-miterlimit:10}
-      .cls-2{fill:#ffffff;stroke:#000000;stroke-width:35;stroke-miterlimit:10}
-      .cls-3{fill:#fbb03b;stroke:#000000;stroke-width:35;stroke-miterlimit:10}
-    </style>
-  </defs>
-  <title>Untitled-1</title>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1080" height="1080" viewBox="0 0 1080 1080">
+  <title>door_locked.svg</title>
   <g id="Layer_1" data-name="Layer 1">
-    <path d="M540 36.256 L540 36.256 C721.231 36.256 868.148 183.173 868.148 364.404 L868.148 1040.364 L211.852 1040.364 L211.852 364.404 C211.852 183.173 358.769 36.256 540 36.256 Z" class="cls-1"/>
-    <path d="M344.855 99.42 L344.855 1040.364" class="cls-2"/>
-    <path d="M480.047 36.256 L480.047 1040.364" class="cls-2"/>
-    <path d="M647.193 53.479 L647.193 1040.364" class="cls-2"/>
-    <path d="M790.989 152.436 L790.989 1040.364" class="cls-2"/>
-    <path d="M377.77 485.813 C377.77 396.216 450.403 323.583 540 323.583 C629.597 323.583 702.23 396.216 702.23 485.813 C702.23 532.019 682.914 573.712 651.916 603.26 L651.916 753.038 L428.084 753.038 L428.084 603.26 C397.086 573.712 377.77 532.019 377.77 485.813 Z" class="cls-3"/>
+    <path d="M540 36.256 L540 36.256 C721.231 36.256 868.148 183.173 868.148 364.404 L868.148 1040.364 L211.852 1040.364 L211.852 364.404 C211.852 183.173 358.769 36.256 540 36.256 Z" fill="#8c6239" stroke="#000000" stroke-width="10" stroke-miterlimit="10"/>
+    <path d="M344.855 99.42 L344.855 1040.364" fill="#ffffff" stroke="#000000" stroke-width="10" stroke-miterlimit="10"/>
+    <path d="M480.047 36.256 L480.047 1040.364" fill="#ffffff" stroke="#000000" stroke-width="10" stroke-miterlimit="10"/>
+    <path d="M647.193 53.479 L647.193 1040.364" fill="#ffffff" stroke="#000000" stroke-width="10" stroke-miterlimit="10"/>
+    <path d="M790.989 152.436 L790.989 1040.364" fill="#ffffff" stroke="#000000" stroke-width="10" stroke-miterlimit="10"/>
+    <path d="M402.216 502.335 C402.216 426.239 463.904 364.55 540 364.55 C616.096 364.55 677.784 426.239 677.784 502.335 C677.784 541.578 661.379 576.988 635.052 602.084 L635.052 729.293 L444.948 729.293 L444.948 602.084 C418.621 576.988 402.216 541.578 402.216 502.335 Z" fill="#fbb03b" stroke="#000000" stroke-width="10" stroke-miterlimit="10"/>
   </g>
 </svg>
