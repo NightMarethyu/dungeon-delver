@@ -4,30 +4,42 @@ Exploring custom Zelda dungeons and whether they would work.
 
 Sketch how a dungeon's rooms connect and what locks each connection (small keys, the big key, items like the hookshot, puzzles, one-way drops). Dungeon Delver tells you whether the dungeon can be beaten, how a player could softlock, which rooms are optional, and what the critical path is.
 
-It's a static site, hosted on GitHub Pages, with no accounts and no server. Version 0.1 was the graph editor; the map view is nearly done, and the plan after that is to grow it into a dungeon building tool for tabletop RPGs (see [Roadmap](#roadmap)).
+It's a static site, hosted on GitHub Pages, with no accounts and no server. Version 1.0 lays dungeons out as a map, floor by floor, with the solver's results on it. The plan from here is to grow it into a dungeon building tool for tabletop RPGs (see [Roadmap](#roadmap) and the [changelog](CHANGELOG.md)).
 
 ![The landing page, with saved dungeons and examples](docs/screenshots/landing-page.png)
 
 ## Features
 
-- **Lay out the dungeon as a map.** The builder opens on the map: one floor at a time, with rooms as rectangles on a snap grid. Drag rooms to move them, drag a corner to resize, and double-click the grid to add a room. Rooms connected on the same floor sit side by side with a door in their shared wall, marked with its lock's icon. Stairs and holes to other floors show inside their room, with arrows for one-way stairs; click one to jump to the room it leads to. Add a door by clicking the **+** on a shared wall or dragging the arrow in a selected room's corner onto another room, and when you put a room against another the map offers to add one. Rooms that have never been on the map are placed automatically, beside the rooms they connect to. Solver highlights on the map are still to come.
+- **Lay out the dungeon as a map.** The builder opens on the map: one floor at a time, with rooms as rectangles on a snap grid. Drag rooms to move them, drag a corner to resize, and double-click the grid to add a room. Rooms connected on the same floor sit side by side with a door in their shared wall, marked with its lock's icon. Stairs and holes to other floors show inside their room, with arrows for one-way stairs; click one to jump to the room it leads to. Add a door by clicking the **+** on a shared wall or dragging the arrow in a selected room's corner onto another room, and when you put a room against another the map offers to add one. Rooms that have never been on the map are placed automatically, beside the rooms they connect to.
 - **Puzzle locks.** A connection can be locked by a puzzle solved inside one of its rooms, like a shutter that opens once you solve the room. It opens from that side only, then stays open both ways, so the solver can tell when a drop or a key choice leaves the player on the wrong side. A puzzle on the door itself (like a lockpicking minigame) can be solved from either side.
 - **Or build it as a graph.** Switch from Map to Graph to add, rename, move, and delete rooms as nodes, and drag between them to connect them. The side panel edits a room's contents (small keys, the big key, named items) or a connection's lock (small key, big key, item, puzzle) and kind (door, stairs, drop, passage, one-way). Pick the start and goal rooms, and sort rooms into floors.
 - **Light and dark themes.** The site follows your system setting until you pick one with the toggle in the header.
-- **Live results.** The solver re-checks the dungeon as you edit. A banner says whether it's beatable and how a player could get stuck, and the canvas highlights the critical path, optional rooms, and unreachable rooms.
-- **Softlock playback.** Step through each way a player can get stuck, one door or drop at a time, and see which rooms they're trapped in.
+- **Live results.** The solver re-checks the dungeon as you edit. A banner says whether it's beatable and how a player could get stuck, and both the map and the graph highlight the critical path, optional rooms, and unreachable rooms. On the map, each floor's tab gets a dot when the critical path goes through it.
+- **Softlock playback.** Step through each way a player can get stuck, one door or drop at a time, and see which rooms they're trapped in. On the map, playback switches to the floor where each step happens.
 - **Saved in your browser.** Dungeons save themselves in `localStorage`, several at once, and are listed on the front page.
 - **Share links.** "Share link" copies a link with the whole dungeon packed into it (compressed with `lz-string`), so nothing is uploaded anywhere. Whoever opens it can look, edit, and save their own copy.
 - **JSON export and import**, for backups and for moving dungeons between browsers.
 - **Three example dungeons** to try: a gentle first one, a key softlock, and a one-way drop trap. An example joins your dungeons only once you change it.
 
-![Live results on the Sunken Cistern example](docs/screenshots/live-results.png)
+![The map view of the Sunken Cistern's lower floor in the dark theme, with the critical path highlighted and lock icons on the doors](docs/screenshots/map-view.png)
 
-![The map view of the Sunken Cistern's lower floor, with lock icons on the doors and the stairs back up, in the dark theme](docs/screenshots/map-view.png)
+![Playing back a softlock on the map: the wasted key leaves the player stuck on both floors](docs/screenshots/softlock-playback.png)
 
-![Playing back a softlock: the wasted key leaves the player stuck](docs/screenshots/softlock-playback.png)
+![Live results on the graph view of the Sunken Cistern](docs/screenshots/live-results.png)
 
 ![A dungeon opened from a share link](docs/screenshots/shared-link.png)
+
+## How the solver works
+
+The solver (`src/solver/`) is plain JavaScript with no React in it, and never looks at the map's geometry, only at rooms, connections, locks, and what's in each room.
+
+1. **Walk everywhere that's free.** From where the player stands, it floods through open connections, doors already unlocked, and locks the player can already pass (the big key, items they hold, solved puzzles), picking up everything in the rooms it reaches. That repeats until nothing new turns up. None of this involves a choice.
+2. **Branch on real choices.** Only two things are choices: which small-key door to spend a key on (keys are interchangeable, so the wrong door can waste one), and whether to take a one-way connection the player can't walk back from. Each choice leads to a new situation, and the solver walks everywhere free from there.
+3. **Search every situation once.** It explores the choices breadth first, remembering situations it has already seen. A guard stops it at 50,000 situations and says the dungeon is too complex to check fully, rather than freezing the tab.
+
+From that search it reports whether the goal can be reached, every **softlock** (the first choice after which the goal can't be reached, with the choices leading up to it for playback), the **critical path** (a winning route with the fewest choices), **unreachable** rooms, and **optional** rooms (rooms that can be removed with the dungeon still beatable).
+
+The solver is tested against small hand-made dungeons in `src/solver/__fixtures__/`, each with the results it should give.
 
 ## Roadmap
 
@@ -35,12 +47,12 @@ It's a static site, hosted on GitHub Pages, with no accounts and no server. Vers
 
 - Phase 0 and 1: the dungeon format and the solver, tested against hand-made fixture dungeons.
 - Phase 2 (v0.1): the graph editor, live results, softlock playback, saves, share links, JSON export, and examples.
-- Phase 3, most of it: the map view, doors in shared walls, clickable stairs and holes between floors, the drawn icons, and puzzle locks. The light and dark themes from Phase 4 are done too.
+- Phase 3 (1.0): the map view, doors in shared walls, clickable stairs and holes between floors, the drawn icons, puzzle locks, and solver highlights and softlock playback on the map. The light and dark themes from Phase 4 are done too.
 
-**Next, for 1.0**
+**Next: polish (1.x)**
 
-- Solver highlights on the map (critical path, optional rooms, softlock playback), as the graph already has.
-- Polish: keyboard shortcuts, a phone layout for viewing and playback, and a short explanation of how the solver works.
+- Keyboard shortcuts for common editing actions.
+- A phone layout, for viewing and softlock playback at least.
 
 **After 1.0: a dungeon builder for tabletop RPGs**
 

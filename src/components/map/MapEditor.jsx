@@ -4,13 +4,13 @@ import { belowAll, freePosition } from '../graph/layout.js'
 import Icon from '../icons/Icon.jsx'
 import { gateIconName, passageIconName, puzzleRooms } from '../icons/icons.js'
 import RoomChips from '../icons/RoomChips.jsx'
-import { GATE_LABELS, KIND_LABELS } from '../labels.js'
+import { GATE_LABELS, KIND_LABELS, MARK_TAGS, ROLE_TAGS } from '../labels.js'
+import { floorMarks } from '../results.js'
 import { doorlessNeighbors, floorLinks, mapConnections } from './doors.js'
 import { bounds, CELL, fits, freeSpot, moveRect, resizeRect, ROOM_SIZE, sharedWall, spotBeside, withMapLayout } from './grid.js'
 
 const HANDLES = ['nw', 'ne', 'sw', 'se']
 const HANDLE_SIZE = 10
-const ROLE_TAGS = { start: '▶ Start', goal: '★ Goal' }
 const MIN_ZOOM = 0.25
 const MAX_ZOOM = 3
 // Cells of empty space kept around the rooms when the view fits them.
@@ -45,16 +45,24 @@ function floorTabs(dungeon) {
   return [...dungeon.floors, ...missing.map((id) => ({ id, name: `${id} (missing)` }))]
 }
 
-function MapRoom({ room, rect, role, selected, invalid, hasPuzzle, links, onPointerDown }) {
+// What a floor tab's dot says, for its tooltip.
+const FLOOR_MARK_TITLES = { path: 'The critical path goes through here', here: 'The player is here', stuck: 'The player is stuck here' }
+
+function MapRoom({ room, rect, role, mark, selected, invalid, hasPuzzle, links, onPointerDown }) {
   const w = rect.w * CELL
   const h = rect.h * CELL
-  const classes = ['map-room', selected && 'selected', role && `role-${role}`, invalid && 'invalid'].filter(Boolean).join(' ')
+  const classes = ['map-room', selected && 'selected', role && `role-${role}`, mark && `mark-${mark}`, invalid && 'invalid'].filter(Boolean).join(' ')
   return (
     <g className={classes} transform={`translate(${rect.x * CELL} ${rect.y * CELL})`}>
       <rect className="map-room-box" width={w} height={h} rx={4} onPointerDown={(e) => onPointerDown(e, 'move')} />
       <foreignObject width={w} height={h} pointerEvents="none">
         <div className="map-room-body">
-          {role && <span className={`tag tag-${role}`}>{ROLE_TAGS[role]}</span>}
+          {(role || MARK_TAGS[mark]) && (
+            <div className="room-tags">
+              {role && <span className={`tag tag-${role}`}>{ROLE_TAGS[role]}</span>}
+              {MARK_TAGS[mark] && <span className={`tag tag-${mark}`}>{MARK_TAGS[mark]}</span>}
+            </div>
+          )}
           <span className="map-room-label">{room.label}</span>
           <RoomChips room={room} hasPuzzle={hasPuzzle} compact />
           {links.length > 0 && (
@@ -63,7 +71,7 @@ function MapRoom({ room, rect, role, selected, invalid, hasPuzzle, links, onPoin
                 <button
                   key={link.edge.id}
                   type="button"
-                  className={`map-floor-link gate-${link.edge.gate.type}`}
+                  className={['map-floor-link', `gate-${link.edge.gate.type}`, link.mark].filter(Boolean).join(' ')}
                   title={link.title}
                   aria-label={link.title}
                   onPointerDown={(e) => e.stopPropagation()}
@@ -125,9 +133,11 @@ function GateBadge({ at, gate }) {
  * One connection on the map: a door on the wall two rooms share, or a dashed
  * line between rooms that are connected but not yet side by side.
  */
-function MapConnection({ connection, rects, selected, title, onPointerDown }) {
+function MapConnection({ connection, rects, mark, selected, title, onPointerDown }) {
   const { edge, door, line } = connection
-  const classes = ['map-connection', `gate-${edge.gate.type}`, `kind-${edge.kind}`, selected && 'selected', line && 'apart'].filter(Boolean).join(' ')
+  const classes = ['map-connection', `gate-${edge.gate.type}`, `kind-${edge.kind}`, mark, selected && 'selected', line && 'apart']
+    .filter(Boolean)
+    .join(' ')
   const to = centerOf(rects.get(edge.to))
   if (door) {
     const at = { x: door.x * CELL, y: door.y * CELL }
@@ -194,9 +204,13 @@ function DoorSpot({ a, b, suggested, title, onAdd }) {
  * shown until something on the map changes; then it's saved with that change,
  * so opening the map alone never changes a dungeon.
  *
+ * The solver's highlights are drawn on the rooms, doors, and stairs, and each
+ * floor's tab gets a dot when the critical path (or, in playback, the player)
+ * is on it. Playback switches to the floor where each step happens.
+ *
  * Takes the same props as GraphEditor.
  */
-export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
+export default function MapEditor({ dungeon, onChange, selection, onSelect, highlights }) {
   const svg = useRef(null)
   const laidOut = useMemo(() => withMapLayout(dungeon), [dungeon])
   const tabs = floorTabs(dungeon)
@@ -209,6 +223,13 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
   if (selectedFloor !== followed) {
     setFollowed(selectedFloor)
     if (selectedFloor) setFloorChoice(selectedFloor)
+  }
+  // Follow softlock playback to the floor each step happens on.
+  const [followedStep, setFollowedStep] = useState(null)
+  if (highlights.focus && highlights !== followedStep) {
+    setFollowedStep(highlights)
+    const focusFloor = dungeon.rooms.find((r) => r.id === highlights.focus)?.floor
+    if (focusFloor) setFloorChoice(focusFloor)
   }
   // Until a floor is picked, show the one the player starts on.
   const startFloor = dungeon.rooms.find((r) => r.id === dungeon.start)?.floor
@@ -422,6 +443,7 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
         edge,
         icon: passageIconName(dungeon, edge),
         title: `${edgeTitle(edge, names)}. Go to ${names(other)} on ${floorName(dungeon.rooms.find((r) => r.id === other).floor)}.`,
+        mark: highlights.edges.get(edge.id),
         onGo: () => onSelect({ kind: 'room', id: other }),
       })),
     ]),
@@ -457,12 +479,14 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
   for (const o of offered) if (!spots.some(([a, b]) => a === offer.id && b === o)) spots.push([offer.id, o])
 
   const center = () => ({ x: size.w / 2, y: size.h / 2 })
+  const tabMarks = floorMarks(dungeon, highlights.rooms)
 
   return (
     <div className="map-view">
       <div className="floor-tabs" role="tablist" aria-label="Floors">
         {tabs.map((f) => {
           const count = dungeon.rooms.filter((r) => r.floor === f.id).length
+          const mark = tabMarks.get(f.id)
           return (
             <button
               key={f.id}
@@ -472,6 +496,7 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
               className={f.id === floor ? 'active' : undefined}
               onClick={() => setFloorChoice(f.id)}
             >
+              {mark && <span className={`floor-mark floor-mark-${mark}`} title={FLOOR_MARK_TITLES[mark]} aria-label={FLOOR_MARK_TITLES[mark]} />}
               {f.name} <span className="floor-count">{count}</span>
             </button>
           )
@@ -512,6 +537,7 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
                     room={room}
                     rect={rect}
                     role={room.id === dungeon.start ? 'start' : room.id === dungeon.goal ? 'goal' : null}
+                    mark={highlights.rooms.get(room.id) ?? null}
                     selected={selectedRoom?.id === room.id}
                     invalid={dragging && !fits(rect, others(room.id))}
                     hasPuzzle={puzzles.has(room.id)}
@@ -525,6 +551,7 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
                     key={c.edge.id}
                     connection={c}
                     rects={shownRects}
+                    mark={highlights.edges.get(c.edge.id)}
                     selected={selectedEdge?.id === c.edge.id}
                     title={edgeTitle(c.edge, names)}
                     onPointerDown={(e) => selectEdge(e, c.edge)}

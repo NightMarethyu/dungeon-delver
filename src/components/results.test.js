@@ -4,7 +4,7 @@ import { emptyDungeon } from '../model/dungeon.js'
 import { loadDungeon } from '../model/load.js'
 import { replay } from '../solver/replay.js'
 import { solve } from '../solver/solve.js'
-import { describeChoice, holdingText, pathEdges, playbackMarks, roomMarks, summarize } from './results.js'
+import { describeChoice, floorMarks, holdingText, pathEdges, playbackMarks, roomMarks, summarize } from './results.js'
 
 const fixture = (name) =>
   loadDungeon(readFileSync(new URL(`../solver/__fixtures__/${name}.json`, import.meta.url), 'utf8')).dungeon
@@ -91,6 +91,33 @@ describe('playbackMarks', () => {
     const { rooms, edges } = playbackMarks(dungeon, steps, 1)
     expect(Object.fromEntries(rooms)).toEqual({ start: 'stuck', dead: 'stuck', keyRoom: 'out', goal: 'out' })
     expect(Object.fromEntries(edges)).toEqual({ toDead: 'pb-current' })
+  })
+
+  it('focuses the start, then where each choice happens', () => {
+    expect(playbackMarks(dungeon, steps, 0).focus).toBe('start')
+    expect(playbackMarks(dungeon, steps, 1).focus).toBe('start')
+    const trap = fixture('one-way-trap')
+    const drop = replay(trap, [{ type: 'oneWay', edge: 'drop' }])
+    expect(playbackMarks(trap, drop, 1).focus).toBe('pit')
+  })
+})
+
+describe('floorMarks', () => {
+  const dungeon = {
+    ...emptyDungeon(),
+    floors: [{ id: 'f1', name: '1F' }, { id: 'f2', name: '2F' }, { id: 'f3', name: '3F' }],
+    rooms: [
+      { id: 'a', label: 'A', floor: 'f1', contents: [] },
+      { id: 'b', label: 'B', floor: 'f1', contents: [] },
+      { id: 'c', label: 'C', floor: 'f2', contents: [] },
+      { id: 'd', label: 'D', floor: 'f3', contents: [] },
+    ],
+  }
+
+  it('gives each floor its strongest mark, and none to floors without one', () => {
+    const marks = floorMarks(dungeon, new Map([['a', 'path'], ['b', 'stuck'], ['c', 'optional'], ['d', 'out']]))
+    expect(Object.fromEntries(marks)).toEqual({ f1: 'stuck' })
+    expect(Object.fromEntries(floorMarks(dungeon, new Map([['c', 'path'], ['d', 'here']])))).toEqual({ f2: 'path', f3: 'here' })
   })
 })
 

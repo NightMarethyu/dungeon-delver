@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { version } from '../../package.json'
 import ThemeToggle from '../components/ThemeToggle.jsx'
 import { EXAMPLES } from '../examples/index.js'
 import { emptyDungeon } from '../model/dungeon.js'
@@ -159,7 +160,7 @@ export default function Landing() {
         <p>
           A fan project. The Legend of Zelda is a trademark of Nintendo; this site isn&apos;t affiliated with or endorsed by Nintendo and uses
           no Nintendo assets.{' '}
-          <a href="https://github.com/NightMarethyu/dungeon-delver">Source on GitHub</a>.
+          <a href="https://github.com/NightMarethyu/dungeon-delver">Source on GitHub</a>. Version {version}.
         </p>
       </footer>
     </div>

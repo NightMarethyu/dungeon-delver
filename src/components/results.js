@@ -84,10 +84,13 @@ export function describeChoice(dungeon, choice) {
  * Highlights for one step of softlock playback, from replay(): the rooms the
  * player can walk (marked 'stuck' on the last step), every other room faded,
  * the doors opened so far, and the connection this step's choice used.
+ * `focus` is the room where this step happens, so a view that shows one floor
+ * at a time can follow along: the start, or where the choice's connection
+ * leads (its far end, for a one-way one).
  * @param {import('../model/dungeon.js').Dungeon} dungeon
  * @param {ReturnType<typeof import('../solver/replay.js').replay>} steps
  * @param {number} at the step shown
- * @returns {{ rooms: Map<string, 'here' | 'stuck' | 'out'>, edges: Map<string, 'pb-opened' | 'pb-current'> }}
+ * @returns {{ rooms: Map<string, 'here' | 'stuck' | 'out'>, edges: Map<string, 'pb-opened' | 'pb-current'>, focus: string | null }}
  */
 export function playbackMarks(dungeon, steps, at) {
   const step = steps[at]
@@ -96,7 +99,30 @@ export function playbackMarks(dungeon, steps, at) {
   const rooms = new Map(dungeon.rooms.map((r) => [r.id, region.has(r.id) ? here : 'out']))
   const edges = new Map(step.opened.map((id) => [id, 'pb-opened']))
   if (step.choice) edges.set(step.choice.edge, 'pb-current')
-  return { rooms, edges }
+  const edge = step.choice && dungeon.edges.find((e) => e.id === step.choice.edge)
+  const focus = edge ? (step.choice.type === 'oneWay' ? edge.to : edge.from) : (dungeon.start ?? step.region[0] ?? null)
+  return { rooms, edges, focus }
+}
+
+// Which room marks a floor tab shows, strongest first.
+const FLOOR_MARKS = ['stuck', 'here', 'path']
+
+/**
+ * The strongest highlight on each floor, for its tab on the map: where the
+ * player is stuck or standing in playback, or the critical path passing
+ * through. Floors with none of these are left out.
+ * @param {Map<string, string>} rooms room marks, from roomMarks() or playbackMarks()
+ * @returns {Map<string, 'stuck' | 'here' | 'path'>} by floor id
+ */
+export function floorMarks(dungeon, rooms) {
+  const marks = new Map()
+  for (const room of dungeon.rooms) {
+    const mark = rooms.get(room.id)
+    if (!FLOOR_MARKS.includes(mark)) continue
+    const had = marks.get(room.floor)
+    if (!had || FLOOR_MARKS.indexOf(mark) < FLOOR_MARKS.indexOf(had)) marks.set(room.floor, mark)
+  }
+  return marks
 }
 
 /** What the player holds at a playback step, in words, like "1 small key, big key, hookshot". */
