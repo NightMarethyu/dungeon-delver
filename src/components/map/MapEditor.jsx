@@ -170,7 +170,7 @@ function DoorSpot({ a, b, suggested, title, onAdd }) {
  *
  * Only the dungeon's own connections are drawn. One between rooms on this
  * floor is a door on the wall they share, or a dashed line until they're moved
- * side by side. Drag the selected room's knob onto another room to connect
+ * side by side. Drag the arrow in the selected room's corner onto another room to connect
  * them, or click a "+" on a shared wall. When an edit leaves a room sharing a
  * wall with another it has no door to, the map offers to add one.
  *
