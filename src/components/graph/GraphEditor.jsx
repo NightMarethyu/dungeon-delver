@@ -9,7 +9,7 @@ import {
   useReactFlow,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { addEdge, addRoom, removeEdge, removeRoom, updateRoom } from '../../model/edit.js'
 import DungeonEdge from './DungeonEdge.jsx'
 import { freePosition } from './layout.js'
@@ -21,6 +21,11 @@ const nodeTypes = { room: RoomNode }
 const edgeTypes = { dungeon: DungeonEdge }
 // Roughly half a new room's size, so a room added at a point is centered on it.
 const HALF_ROOM = { x: 60, y: 22 }
+// How far the arrow keys move a room, and with Shift held.
+const NUDGE = 20
+const BIG_NUDGE = 100
+// Two taps closer together than this, in ms, are a double tap.
+const DOUBLE_TAP = 350
 
 /**
  * The React Flow canvas. The dungeon is the only source of truth: nodes and
@@ -34,11 +39,16 @@ const HALF_ROOM = { x: 60, y: 22 }
  *   onSelect: React.Dispatch<React.SetStateAction<{ kind: 'room' | 'edge', id: string } | null>>,
  *   highlights: { rooms: Map<string, string>, edges: Map<string, string> },
  *     a mark per room and a CSS class per connection, from results.js
+ *   commands: React.Ref, given the commands the keyboard shortcuts run:
+ *     addRoom(), nudge(roomId, dx, dy, shift), floor(step), zoomIn(), zoomOut(), fit()
  * }} props
  */
-function Canvas({ dungeon, onChange, selection, onSelect, highlights }) {
+function Canvas({ dungeon, onChange, selection, onSelect, highlights, commands }) {
   const wrapper = useRef(null)
-  const { screenToFlowPosition } = useReactFlow()
+  const { screenToFlowPosition, zoomIn, zoomOut, fitView } = useReactFlow()
+  // When the empty canvas was last tapped, to spot a double tap. Touch screens
+  // don't reliably report one as a double click.
+  const lastPaneClick = useRef(0)
   const theme = useTheme()
   // React Flow measures each node after it renders. Keep those sizes, since
   // nodes rebuilt without them would be measured again from scratch.
@@ -133,6 +143,29 @@ function Canvas({ dungeon, onChange, selection, onSelect, highlights }) {
     addRoomAt(screenToFlowPosition({ x: box.left + box.width / 2, y: box.top + box.height / 2 }))
   }
 
+  function onPaneClick(event) {
+    const double = event.detail === 2 || event.timeStamp - lastPaneClick.current < DOUBLE_TAP
+    lastPaneClick.current = double ? 0 : event.timeStamp
+    if (double) addRoomAt(screenToFlowPosition({ x: event.clientX, y: event.clientY }))
+  }
+
+  useImperativeHandle(commands, () => ({
+    addRoom: addRoomInView,
+    nudge(id, dx, dy, shift) {
+      const step = shift ? BIG_NUDGE : NUDGE
+      onChange((d) => {
+        const { x, y } = d.rooms.find((r) => r.id === id).graphPos ?? { x: 0, y: 0 }
+        return updateRoom(d, id, { graphPos: { x: x + dx * step, y: y + dy * step } })
+      })
+      return true
+    },
+    // The graph shows every floor at once.
+    floor: () => {},
+    zoomIn: () => zoomIn(),
+    zoomOut: () => zoomOut(),
+    fit: () => fitView({ maxZoom: 1 }),
+  }))
+
   return (
     <div className="graph-canvas" ref={wrapper}>
       <ReactFlow
@@ -143,10 +176,11 @@ function Canvas({ dungeon, onChange, selection, onSelect, highlights }) {
         onNodesChange={(changes) => handleChanges('room', changes)}
         onEdgesChange={(changes) => handleChanges('edge', changes)}
         onConnect={onConnect}
-        onPaneClick={(e) => e.detail === 2 && addRoomAt(screenToFlowPosition({ x: e.clientX, y: e.clientY }))}
+        onPaneClick={onPaneClick}
         connectionMode={ConnectionMode.Loose}
         connectionRadius={40}
-        deleteKeyCode={['Backspace', 'Delete']}
+        // Delete, like the other shortcuts, is handled by the builder.
+        deleteKeyCode={null}
         multiSelectionKeyCode={null}
         selectionKeyCode={null}
         zoomOnDoubleClick={false}

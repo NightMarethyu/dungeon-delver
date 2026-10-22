@@ -114,6 +114,8 @@ select {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  /* Phones: the visible height, without the browser's toolbars. */
+  height: 100dvh;
 }
 
 .app-header {
@@ -161,6 +163,30 @@ select {
   align-self: center;
 }
 
+.undo-redo {
+  display: flex;
+  gap: 0.2rem;
+}
+
+/* The "⋯" menu only exists on phones. Elsewhere its items sit in the header. */
+.more-menu,
+.more-items {
+  display: contents;
+}
+
+.more-toggle {
+  display: none;
+}
+
+/* The side panel's toggle only exists on phones, where the panel is a sheet. */
+.panel-sheet {
+  display: contents;
+}
+
+.sheet-toggle {
+  display: none;
+}
+
 .not-found {
   max-width: 32rem;
   margin: 4rem auto;
@@ -196,33 +222,175 @@ select {
   gap: 0.75rem;
 }
 
+/* Phones: a one-line header, the canvas filling the screen, and the side
+   panel as a sheet under it that opens with its toggle. */
 @media (max-width: 760px) {
-  .app {
-    height: auto;
-  }
-
   .app-header {
     flex-wrap: wrap;
-    gap: 0.2rem 0.75rem;
+    align-items: center;
+    gap: 0.2rem 0.5rem;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .home-text {
+    display: none;
+  }
+
+  .app-header h1 {
+    flex: 1;
+    min-width: 0;
+    font-size: 1.05rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .save-status {
+    order: 1;
     margin-left: 0;
     flex-basis: 100%;
   }
 
-  .workspace {
-    grid-template-columns: 1fr;
+  /* Saving is quiet on a phone; only say something when it matters. */
+  .save-status.save-saved,
+  .save-status.save-saving {
+    display: none;
   }
 
-  .graph-canvas {
+  .header-actions {
+    gap: 0.3rem;
+  }
+
+  .header-actions button {
+    padding: 0.35rem 0.55rem;
+  }
+
+  .more-menu {
+    display: block;
+    position: relative;
+  }
+
+  .more-toggle {
+    display: block;
+    font-weight: 700;
+  }
+
+  .more-items {
+    display: none;
+  }
+
+  .more-items.open {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 0.3rem);
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.3rem;
+    min-width: 11rem;
+    padding: 0.4rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 18%);
+  }
+
+  .more-items.open button {
+    text-align: left;
+    padding: 0.55rem 0.7rem;
+  }
+
+  .shortcuts-button {
+    display: none;
+  }
+
+  .workspace {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .canvas-column {
+    flex: 1;
+  }
+
+  .results-banner {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .results-banner .legend {
+    display: none;
+  }
+
+  .results-banner .softlocks {
+    max-height: 30dvh;
+    overflow-y: auto;
+  }
+
+  /* During playback the list of softlocks gives its room to the map. Stop
+     playback to pick another. */
+  .canvas-column:has(.playback) .banner-details {
+    display: none;
+  }
+
+  .playback {
+    padding: 0.4rem 0.6rem;
+  }
+
+  .panel-sheet {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .panel-sheet.open {
+    max-height: 55dvh;
+  }
+
+  .sheet-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     flex: none;
-    height: 65vh;
+    width: 100%;
+    border: none;
+    border-radius: 0;
+    padding: 0.7rem 1rem;
+    font-weight: 600;
+    /* Clear of the home bar on phones that have one. */
+    padding-bottom: max(0.7rem, env(safe-area-inset-bottom));
+  }
+
+  .panel-sheet.open .sheet-toggle {
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid var(--border);
   }
 
   .side-panel {
+    display: none;
     border-left: none;
-    border-top: 1px solid var(--border);
+  }
+
+  .panel-sheet.open .side-panel {
+    display: flex;
+    min-height: 0;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Touch screens: no keys to mention, and connection dots big enough to drag. */
+@media (pointer: coarse) {
+  .key-hint {
+    display: none;
+  }
+
+  .room-handle.react-flow__handle {
+    width: 18px;
+    height: 18px;
+    opacity: 0.6;
   }
 }
 
@@ -1459,9 +1627,82 @@ button.big {
   flex: 1 1 14rem;
 }
 
-@media (max-width: 760px) {
-  .map-view {
-    flex: none;
-    height: 65vh;
-  }
+/* A bigger target around a door, for fingers. */
+.map-door-hit {
+  fill: transparent;
+}
+
+/* Keyboard shortcuts dialog */
+
+.shortcuts-dialog {
+  width: min(34rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 4rem);
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.shortcuts-dialog::backdrop {
+  background: rgb(0 0 0 / 40%);
+}
+
+.shortcuts-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shortcuts-dialog h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.shortcuts-dialog h3 {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.shortcuts-dialog dl {
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.shortcuts-dialog dl > div {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.shortcuts-dialog dt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}
+
+.shortcuts-dialog dd {
+  margin: 0;
+}
+
+kbd {
+  font: inherit;
+  font-size: 0.8rem;
+  min-width: 1.4em;
+  text-align: center;
+  padding: 0.05rem 0.35rem;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--bg);
+}
+
+.shortcuts-dialog > p {
+  margin: 1rem 0 0;
+  font-size: 0.85rem;
 }
