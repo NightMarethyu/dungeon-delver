@@ -16,6 +16,16 @@
   --gate-smallKey: light-dark(#b7791f, #e0a43a);
   --gate-bigKey: light-dark(#b3261e, #ef6b62);
   --gate-item: light-dark(#2b6cb0, #6aa8ef);
+  --gate-puzzle: light-dark(#7a4fb0, #b591ec);
+  /* The drawn icons (src/assets/icons/) keep their shapes; their colors are
+     swapped for these, so they suit both themes. */
+  --icon-ink: light-dark(#231c17, #e8e6e1);
+  --icon-void: light-dark(#14110f, #050507);
+  --icon-paper: light-dark(#ffffff, #2c2c38);
+  --icon-stone: light-dark(#999999, #6d6d7a);
+  --icon-wood: light-dark(#8c6239, #7a5532);
+  --icon-gold: light-dark(#fbb03b, #e9a43a);
+  --icon-red: light-dark(#ed1c24, #e5484d);
   /* Solver results: banner tones and room highlights. */
   --good: light-dark(#2f7d4f, #5cc48a);
   --warn: light-dark(#b7791f, #e0a43a);
@@ -356,6 +366,63 @@ select {
   color: var(--gate-item);
 }
 
+.chip-puzzle {
+  color: var(--gate-puzzle);
+}
+
+.chip.icon-only {
+  padding: 0.1rem;
+}
+
+/* Drawn icons sit on the text line, beside the words they go with. */
+.icon {
+  flex: none;
+  vertical-align: middle;
+  overflow: visible;
+}
+
+.chip,
+.edge-label,
+.with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.field > .with-icon {
+  display: flex;
+  gap: 0.4rem;
+  font-size: inherit;
+  color: inherit;
+}
+
+.field > .with-icon select {
+  flex: 1;
+  min-width: 0;
+}
+
+.content-row > .icon {
+  align-self: center;
+}
+
+.puzzle-note {
+  margin: 0;
+  gap: 0.5rem;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+button.link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* Connection dots: faint until you hover the room. */
 .room-handle.react-flow__handle {
   width: 10px;
@@ -389,6 +456,10 @@ select {
 
 .react-flow__edge.gate-item {
   --gate-color: var(--gate-item);
+}
+
+.react-flow__edge.gate-puzzle {
+  --gate-color: var(--gate-puzzle);
 }
 
 .react-flow .react-flow__edge.kind-drop .react-flow__edge-path {
@@ -437,6 +508,10 @@ select {
 
 .edge-label.gate-item {
   color: var(--gate-item);
+}
+
+.edge-label.gate-puzzle {
+  color: var(--gate-puzzle);
 }
 
 /* Start, goal, floor, and solver tags on rooms */
@@ -1089,6 +1164,10 @@ button.big {
   --gate-color: var(--gate-item);
 }
 
+.map-connection.gate-puzzle {
+  --gate-color: var(--gate-puzzle);
+}
+
 .map-door {
   fill: var(--gate-color);
   stroke: var(--surface);
@@ -1119,10 +1198,37 @@ button.big {
   stroke-width: 2;
 }
 
-.map-door-badge text {
-  font-size: 10px;
-  text-anchor: middle;
+.map-door-badge .icon {
   pointer-events: none;
+}
+
+/* Stairs and holes to other floors, inside the room they're in. */
+.map-room-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.map-floor-link {
+  position: relative;
+  pointer-events: auto;
+  padding: 0.15rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  line-height: 0;
+  cursor: pointer;
+}
+
+.map-floor-link:hover {
+  border-color: var(--accent);
+}
+
+.map-floor-link-gate {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
 }
 
 .map-link {

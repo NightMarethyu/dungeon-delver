@@ -1,4 +1,6 @@
 import { BaseEdge, EdgeLabelRenderer, getStraightPath, useInternalNode } from '@xyflow/react'
+import Icon from '../icons/Icon.jsx'
+import { gateIconName } from '../icons/icons.js'
 import { KIND_LABELS, thingText } from '../labels.js'
 import { borderPoint, center } from './layout.js'
 
@@ -21,8 +23,9 @@ export default function DungeonEdge({ id, source, target, data, markerEnd, inter
   const to = borderPoint(b, center(a))
   const [path, labelX, labelY] = getStraightPath({ sourceX: from.x, sourceY: from.y, targetX: to.x, targetY: to.y })
 
-  const { edge } = data
+  const { edge, passage } = data
   const parts = [edge.kind !== 'door' && KIND_LABELS[edge.kind], thingText(edge.gate)].filter(Boolean)
+  const gated = edge.gate.type !== 'open'
 
   return (
     <>
@@ -33,6 +36,8 @@ export default function DungeonEdge({ id, source, target, data, markerEnd, inter
             className={`edge-label gate-${edge.gate.type}`}
             style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
           >
+            {passage && <Icon name={passage} size={14} />}
+            {gated && <Icon name={gateIconName(edge.gate)} size={14} />}
             {parts.join(' · ')}
           </div>
         </EdgeLabelRenderer>

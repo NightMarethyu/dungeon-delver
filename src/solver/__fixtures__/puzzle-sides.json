@@ -1,0 +1,24 @@
+{
+  "version": 3,
+  "name": "Puzzle Sides",
+  "floors": [
+    { "id": "1F", "name": "Ground Floor" },
+    { "id": "B1", "name": "Basement" }
+  ],
+  "rooms": [
+    { "id": "start", "floor": "1F", "label": "Entrance", "contents": [] },
+    { "id": "statues", "floor": "1F", "label": "Statue Room", "contents": [] },
+    { "id": "goal", "floor": "1F", "label": "Boss Room", "contents": [] },
+    { "id": "sealed", "floor": "1F", "label": "Sealed Vault", "contents": [{ "type": "item", "name": "rupees" }] },
+    { "id": "pit", "floor": "B1", "label": "Pit", "contents": [] }
+  ],
+  "edges": [
+    { "id": "e1", "from": "start", "to": "statues", "kind": "door", "gate": { "type": "open" } },
+    { "id": "shutter", "from": "statues", "to": "goal", "kind": "door", "gate": { "type": "puzzle", "at": "statues" } },
+    { "id": "vaultDoor", "from": "start", "to": "sealed", "kind": "door", "gate": { "type": "puzzle", "at": "sealed" } },
+    { "id": "hole", "from": "start", "to": "pit", "kind": "drop", "gate": { "type": "open" }, "oneWay": true },
+    { "id": "ladder", "from": "pit", "to": "start", "kind": "stairs", "gate": { "type": "puzzle", "at": "start" } }
+  ],
+  "start": "start",
+  "goal": "goal"
+}

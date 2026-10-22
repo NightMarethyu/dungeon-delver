@@ -1,18 +1,18 @@
 {
-  "version": 2,
+  "version": 3,
   "name": "Ember Spire",
   "floors": [
     {
-      "id": "1F",
-      "name": "Ground Floor"
+      "id": "3F",
+      "name": "Spire Top"
     },
     {
       "id": "2F",
       "name": "Second Floor"
     },
     {
-      "id": "3F",
-      "name": "Spire Top"
+      "id": "1F",
+      "name": "Ground Floor"
     }
   ],
   "rooms": [

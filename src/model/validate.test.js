@@ -38,6 +38,7 @@ describe('validateDungeon', () => {
     ['an unknown edge kind', (d) => (d.edges[0].kind = 'portal'), { severity: 'warning', code: 'unknownEdgeKind', ids: ['e1'] }],
     ['an unknown gate type', (d) => (d.edges[0].gate = { type: 'magic' }), { severity: 'warning', code: 'unknownGateType', ids: ['e1'] }],
     ['an item gate with no item name', (d) => (d.edges[0].gate = { type: 'item' }), { severity: 'warning', code: 'gateMissingItemName', ids: ['e1'] }],
+    ['a puzzle in a room the edge does not connect', (d) => (d.edges[0].gate = { type: 'puzzle', at: 'zz' }), { severity: 'warning', code: 'puzzleRoomNotOnEdge', ids: ['e1'] }],
     ['an unknown content type', (d) => (d.rooms[0].contents = [{ type: 'rupee' }]), { severity: 'warning', code: 'unknownContentType', ids: ['a'] }],
     ['an item with no name', (d) => (d.rooms[0].contents = [{ type: 'item' }]), { severity: 'warning', code: 'contentMissingItemName', ids: ['a'] }],
     ['an invalid rect', (d) => (d.rooms[0].rect = { x: 0, y: 0, w: 0, h: 2 }), { severity: 'warning', code: 'invalidRect', ids: ['a'] }],

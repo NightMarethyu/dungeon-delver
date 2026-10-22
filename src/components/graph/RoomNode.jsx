@@ -1,6 +1,6 @@
 import { Handle, Position } from '@xyflow/react'
 import { useState } from 'react'
-import { thingText } from '../labels.js'
+import RoomChips from '../icons/RoomChips.jsx'
 
 const SIDES = [Position.Top, Position.Right, Position.Bottom, Position.Left]
 const ROLE_TAGS = { start: '▶ Start', goal: '★ Goal' }
@@ -10,7 +10,7 @@ const MARK_TAGS = { optional: 'Optional', unreachable: 'Unreachable', stuck: 'St
 // each side start a connection; with connectionMode "loose" any dot can end one.
 // `role` marks the start and goal rooms, and `mark` is the solver's highlight.
 export default function RoomNode({ data, selected }) {
-  const { room, role, mark, floorName, onRename } = data
+  const { room, role, mark, floorName, hasPuzzle, onRename } = data
   const [editing, setEditing] = useState(false)
 
   function commit(event) {
@@ -49,13 +49,7 @@ export default function RoomNode({ data, selected }) {
           {room.label}
         </div>
       )}
-      {room.contents.length > 0 && (
-        <ul className="room-contents">
-          {room.contents.map((c, i) => (
-            <li key={i} className={`chip chip-${c.type}`}>{thingText(c)}</li>
-          ))}
-        </ul>
-      )}
+      <RoomChips room={room} hasPuzzle={hasPuzzle} />
     </div>
   )
 }

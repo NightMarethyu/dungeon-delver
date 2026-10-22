@@ -15,6 +15,7 @@ import DungeonEdge from './DungeonEdge.jsx'
 import { freePosition } from './layout.js'
 import RoomNode from './RoomNode.jsx'
 import { useTheme } from '../../theme.js'
+import { passageIconName, puzzleRooms } from '../icons/icons.js'
 
 const nodeTypes = { room: RoomNode }
 const edgeTypes = { dungeon: DungeonEdge }
@@ -46,6 +47,7 @@ function Canvas({ dungeon, onChange, selection, onSelect, highlights }) {
   const nodes = useMemo(() => {
     // Only name each room's floor when there's more than one.
     const floorNames = dungeon.floors.length > 1 ? new Map(dungeon.floors.map((f) => [f.id, f.name])) : null
+    const puzzles = puzzleRooms(dungeon)
     return dungeon.rooms.map((room) => ({
       id: room.id,
       type: 'room',
@@ -57,10 +59,11 @@ function Canvas({ dungeon, onChange, selection, onSelect, highlights }) {
         role: room.id === dungeon.start ? 'start' : room.id === dungeon.goal ? 'goal' : null,
         mark: highlights.rooms.get(room.id) ?? null,
         floorName: floorNames && (floorNames.get(room.floor) ?? room.floor),
+        hasPuzzle: puzzles.has(room.id),
         onRename: (label) => onChange((d) => updateRoom(d, room.id, { label })),
       },
     }))
-  }, [dungeon.rooms, dungeon.floors, dungeon.start, dungeon.goal, highlights, sizes, selection, onChange])
+  }, [dungeon, highlights, sizes, selection, onChange])
 
   const edges = useMemo(
     () =>
@@ -72,9 +75,9 @@ function Canvas({ dungeon, onChange, selection, onSelect, highlights }) {
         selected: selection?.kind === 'edge' && selection.id === edge.id,
         className: `gate-${edge.gate.type} kind-${edge.kind}${highlights.edges.has(edge.id) ? ` ${highlights.edges.get(edge.id)}` : ''}`,
         markerEnd: edge.oneWay ? { type: MarkerType.ArrowClosed, width: 18, height: 18, color: `var(--gate-${edge.gate.type})` } : undefined,
-        data: { edge },
+        data: { edge, passage: passageIconName(dungeon, edge) },
       })),
-    [dungeon.edges, highlights, selection],
+    [dungeon, highlights, selection],
   )
 
   const handleChanges = useCallback(

@@ -8,7 +8,7 @@ The JSDoc types are in [`dungeon.js`](dungeon.js). Load saved or shared JSON wit
 
 ```json
 {
-  "version": 2,
+  "version": 3,
   "name": "Example Dungeon",
   "floors": [{ "id": "1F", "name": "Ground Floor" }],
   "rooms": [
@@ -29,7 +29,7 @@ The JSDoc types are in [`dungeon.js`](dungeon.js). Load saved or shared JSON wit
 | --- | --- | --- |
 | `version` | Format version. Bump it, and add a migration in `load.js`, whenever the format changes. | Current version, with a warning |
 | `name` | Dungeon name. | `"Untitled Dungeon"` |
-| `floors[]` | `{ id, name }`. | `[]` |
+| `floors[]` | `{ id, name }`, listed from the top floor down. The map uses the order to tell stairs up from stairs down. | `[]` |
 | `rooms[]` | `{ id, floor, label, contents, rect? }`. | `label` = `id`, `contents` = `[]` |
 | `rooms[].rect` | `{ x, y, w, h }` in grid units. Only the map view uses it. Optional. | Left out |
 | `rooms[].graphPos` | `{ x, y }` in pixels. Only the graph editor uses it; rooms without one are laid out on a grid. Optional. Added in version 2. | Left out |
@@ -45,6 +45,7 @@ The JSDoc types are in [`dungeon.js`](dungeon.js). Load saved or shared JSON wit
   - `smallKey`: costs one small key the first time it's opened, from either side. It then stays open. Small keys are interchangeable.
   - `bigKey`: passable while holding the big key. Never used up.
   - `item`: passable while holding the item named by `name`. Never used up.
+  - `puzzle`: opened by solving a puzzle in the room named by `at`, which must be one of the edge's two rooms. The player solves it on reaching that room (it costs nothing), and it then stays open from both sides. From the other side it stays shut until then, like a shutter door opened by a switch. With no `at`, the puzzle is on the door itself and can be solved from either side, so it never blocks the player. Added in version 3.
 - **Contents** are `smallKey`, `bigKey`, or `item` with a `name`. They're collected on entering the room.
 - Gate and content types are data, not hardcoded rules, so a later TTRPG mode can rename them.
 
@@ -66,4 +67,5 @@ Each problem is `{ severity, code, message, ids }`. `ids` lists the rooms, edges
 | `selfLoop` | warning | An edge connects a room to itself |
 | `unknownEdgeKind` | warning | An edge has an unknown `kind` |
 | `unknownGateType`, `gateMissingItemName` | warning | An edge's gate is unknown, or an item gate has no item name |
+| `puzzleRoomNotOnEdge` | warning | A puzzle gate's `at` names a room the edge doesn't connect; it's read as solvable from either side |
 | `unknownContentType`, `contentMissingItemName` | warning | A room holds something unknown, or an item with no name |

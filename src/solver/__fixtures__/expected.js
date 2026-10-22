@@ -72,4 +72,16 @@ export const EXPECTED = {
     optionalRooms: ['closet'],
     criticalPath: ['start', 'mid', 'goal'],
   },
+  // A puzzle opens its connection only from the room it's in, and stays open
+  // once solved. The Statue Room's puzzle opens the boss door; the vault's
+  // puzzle is on the far side, so the vault can't be reached. The ladder out
+  // of the pit is opened from the entrance, which the player has already
+  // been in, so the drop is safe.
+  'puzzle-sides': {
+    beatable: true,
+    softlocks: [],
+    unreachableRooms: ['sealed'],
+    optionalRooms: ['pit'],
+    criticalPath: ['start', 'statues', 'goal'],
+  },
 }

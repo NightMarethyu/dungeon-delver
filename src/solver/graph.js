@@ -18,8 +18,11 @@ export function buildGraph(dungeon, without) {
   const oneWay = new Map([...contents.keys()].map((id) => [id, []]))
   const keyDoors = []
   const oneWayEdges = []
+  // Rooms holding a puzzle that opens a connection. Visiting one solves it.
+  const puzzleRooms = new Set()
   for (const edge of dungeon.edges) {
     if (!contents.has(edge.from) || !contents.has(edge.to) || edge.from === edge.to) continue
+    if (puzzleRoom(edge)) puzzleRooms.add(puzzleRoom(edge))
     if (edge.oneWay) {
       oneWay.get(edge.from).push(edge)
       oneWayEdges.push(edge)
@@ -30,13 +33,21 @@ export function buildGraph(dungeon, without) {
     }
   }
 
-  return { contents, twoWay, oneWay, keyDoors, oneWayEdges, start: dungeon.start, goal: dungeon.goal }
+  return { contents, twoWay, oneWay, keyDoors, oneWayEdges, puzzleRooms, start: dungeon.start, goal: dungeon.goal }
+}
+
+// The room a puzzle gate is solved from, or null when it can be solved from
+// either side (or the gate isn't a puzzle).
+export function puzzleRoom(edge) {
+  const { gate } = edge
+  return gate.type === 'puzzle' && (gate.at === edge.from || gate.at === edge.to) ? gate.at : null
 }
 
 export const otherEnd = (edge, room) => (edge.from === room ? edge.to : edge.from)
 
 // What the player holds, given the rooms they've emptied and the key doors
-// they've opened.
+// they've opened. `visited` is the emptied rooms too: a puzzle in one of them
+// is solved.
 export function inventory(graph, collected, opened) {
   let keys = -opened.size
   let bigKey = false
@@ -48,7 +59,7 @@ export function inventory(graph, collected, opened) {
       else if (content.type === 'item') items.add(content.name)
     }
   }
-  return { keys, bigKey, items }
+  return { keys, bigKey, items, visited: collected }
 }
 
 // Whether a gate lets the player through without spending anything.
@@ -63,6 +74,14 @@ export function isPassable(edge, inv, opened) {
       return inv.bigKey
     case 'item':
       return inv.items.has(gate.name)
+    case 'puzzle': {
+      // Solving a puzzle costs nothing and only ever opens a way, so the
+      // player solves it whenever they reach its room. It then stays open
+      // from both sides. One that can be solved from either side is as good
+      // as open.
+      const room = puzzleRoom(edge)
+      return room === null || inv.visited.has(room)
+    }
     default:
       return false
   }

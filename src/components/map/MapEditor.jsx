@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { addEdge, addRoom, removeEdge, removeRoom, updateRoom } from '../../model/edit.js'
 import { belowAll, freePosition } from '../graph/layout.js'
-import { gateIcon, GATE_LABELS, KIND_LABELS, thingText } from '../labels.js'
-import { doorlessNeighbors, mapConnections } from './doors.js'
+import Icon from '../icons/Icon.jsx'
+import { gateIconName, passageIconName, puzzleRooms } from '../icons/icons.js'
+import RoomChips from '../icons/RoomChips.jsx'
+import { GATE_LABELS, KIND_LABELS } from '../labels.js'
+import { doorlessNeighbors, floorLinks, mapConnections } from './doors.js'
 import { bounds, CELL, fits, freeSpot, moveRect, resizeRect, ROOM_SIZE, sharedWall, spotBeside, withMapLayout } from './grid.js'
 
 const HANDLES = ['nw', 'ne', 'sw', 'se']
@@ -15,7 +18,8 @@ const FIT_MARGIN = 2
 
 // How a door is drawn: its length along the wall, and its thickness, in pixels.
 const DOOR = { length: CELL * 0.8, thickness: 10 }
-const BADGE_RADIUS = 9
+const BADGE_RADIUS = 11
+const BADGE_ICON = 16
 
 const clampZoom = (zoom) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom))
 const sameRect = (a, b) => a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h
@@ -41,7 +45,7 @@ function floorTabs(dungeon) {
   return [...dungeon.floors, ...missing.map((id) => ({ id, name: `${id} (missing)` }))]
 }
 
-function MapRoom({ room, rect, role, selected, invalid, onPointerDown }) {
+function MapRoom({ room, rect, role, selected, invalid, hasPuzzle, links, onPointerDown }) {
   const w = rect.w * CELL
   const h = rect.h * CELL
   const classes = ['map-room', selected && 'selected', role && `role-${role}`, invalid && 'invalid'].filter(Boolean).join(' ')
@@ -52,12 +56,24 @@ function MapRoom({ room, rect, role, selected, invalid, onPointerDown }) {
         <div className="map-room-body">
           {role && <span className={`tag tag-${role}`}>{ROLE_TAGS[role]}</span>}
           <span className="map-room-label">{room.label}</span>
-          {room.contents.length > 0 && (
-            <ul className="room-contents">
-              {room.contents.map((c, i) => (
-                <li key={i} className={`chip chip-${c.type}`}>{thingText(c)}</li>
+          <RoomChips room={room} hasPuzzle={hasPuzzle} compact />
+          {links.length > 0 && (
+            <div className="map-room-links">
+              {links.map((link) => (
+                <button
+                  key={link.edge.id}
+                  type="button"
+                  className={`map-floor-link gate-${link.edge.gate.type}`}
+                  title={link.title}
+                  aria-label={link.title}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={link.onGo}
+                >
+                  <Icon name={link.icon} size={22} />
+                  {link.edge.gate.type !== 'open' && <Icon name={gateIconName(link.edge.gate)} size={14} className="map-floor-link-gate" />}
+                </button>
               ))}
-            </ul>
+            </div>
           )}
         </div>
       </foreignObject>
@@ -94,13 +110,13 @@ function Arrow({ at, dir }) {
   return <path className="map-door-arrow" d="M -5 -6 L 6 0 L -5 6 Z" transform={`translate(${at.x} ${at.y}) rotate(${angle})`} />
 }
 
+// The lock on a door, as its icon in a circle. Open doors have none.
 function GateBadge({ at, gate }) {
-  const icon = gateIcon(gate)
-  if (!icon) return null
+  if (gate.type === 'open') return null
   return (
     <g className="map-door-badge" transform={`translate(${at.x} ${at.y})`}>
       <circle r={BADGE_RADIUS} />
-      <text dy="0.35em">{icon}</text>
+      <Icon name={gateIconName(gate)} size={BADGE_ICON} x={-BADGE_ICON / 2} y={-BADGE_ICON / 2} />
     </g>
   )
 }
@@ -194,7 +210,9 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
     setFollowed(selectedFloor)
     if (selectedFloor) setFloorChoice(selectedFloor)
   }
-  const floor = tabs.some((f) => f.id === floorChoice) ? floorChoice : tabs[0]?.id
+  // Until a floor is picked, show the one the player starts on.
+  const startFloor = dungeon.rooms.find((r) => r.id === dungeon.start)?.floor
+  const floor = [floorChoice, startFloor].find((id) => tabs.some((f) => f.id === id)) ?? tabs[0]?.id
 
   const rooms = laidOut.rooms.filter((r) => r.floor === floor)
   const rects = new Map(rooms.map((r) => [r.id, r.rect]))
@@ -393,6 +411,21 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
   }
 
   const connections = mapConnections(rooms, dungeon.edges)
+  const puzzles = puzzleRooms(dungeon)
+  // Connections to other floors, shown as stairs or holes inside the room.
+  // Clicking one goes to the room at the other end.
+  const floorName = (id) => tabs.find((f) => f.id === id)?.name ?? id
+  const links = new Map(
+    [...floorLinks(dungeon, rooms)].map(([id, list]) => [
+      id,
+      list.map(({ edge, other }) => ({
+        edge,
+        icon: passageIconName(dungeon, edge),
+        title: `${edgeTitle(edge, names)}. Go to ${names(other)} on ${floorName(dungeon.rooms.find((r) => r.id === other).floor)}.`,
+        onGo: () => onSelect({ kind: 'room', id: other }),
+      })),
+    ]),
+  )
   // While a room is dragged, its doors go with it.
   const shown = drag?.draft ? rooms.map((r) => (r.id === drag.id ? { ...r, rect: drag.draft } : r)) : rooms
   const shownConnections = shown === rooms ? connections : mapConnections(shown, dungeon.edges)
@@ -481,6 +514,8 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
                     role={room.id === dungeon.start ? 'start' : room.id === dungeon.goal ? 'goal' : null}
                     selected={selectedRoom?.id === room.id}
                     invalid={dragging && !fits(rect, others(room.id))}
+                    hasPuzzle={puzzles.has(room.id)}
+                    links={links.get(room.id) ?? []}
                     onPointerDown={(e, mode) => startRoomDrag(e, room, mode)}
                   />
                 )

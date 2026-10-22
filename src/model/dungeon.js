@@ -1,9 +1,9 @@
 // The dungeon format. Pure data, no React: both views and the solver read it.
 // See README.md in this folder for the rules behind each field.
 
-export const CURRENT_VERSION = 2
+export const CURRENT_VERSION = 3
 
-export const GATE_TYPES = ['open', 'smallKey', 'bigKey', 'item']
+export const GATE_TYPES = ['open', 'smallKey', 'bigKey', 'item', 'puzzle']
 export const CONTENT_TYPES = ['smallKey', 'bigKey', 'item']
 // Only affects rendering. The solver ignores it.
 export const EDGE_KINDS = ['door', 'stairs', 'drop', 'passage']
@@ -14,7 +14,7 @@ export const EDGE_KINDS = ['door', 'stairs', 'drop', 'passage']
  * @typedef {{ type: 'smallKey' } | { type: 'bigKey' } | { type: 'item', name: string }} Content
  * @typedef {{ x: number, y: number }} Point
  * @typedef {{ id: string, floor: string, label: string, rect?: Rect, graphPos?: Point, contents: Content[] }} Room
- * @typedef {{ type: 'open' } | { type: 'smallKey' } | { type: 'bigKey' } | { type: 'item', name: string }} Gate
+ * @typedef {{ type: 'open' } | { type: 'smallKey' } | { type: 'bigKey' } | { type: 'item', name: string } | { type: 'puzzle', at?: string }} Gate
  * @typedef {{ id: string, from: string, to: string, kind: string, gate: Gate, oneWay: boolean }} Edge
  * @typedef {{
  *   version: number,
