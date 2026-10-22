@@ -16,7 +16,7 @@ It's a static site, hosted on GitHub Pages, with no accounts and no server. Vers
 - **Saved in your browser.** Dungeons save themselves in `localStorage`, several at once, and are listed on the front page.
 - **Share links.** "Share link" copies a link with the whole dungeon packed into it (compressed with `lz-string`), so nothing is uploaded anywhere. Whoever opens it can look, edit, and save their own copy.
 - **JSON export and import**, for backups and for moving dungeons between browsers.
-- **Three example dungeons** to try: a gentle first one, a key softlock, and a one-way drop trap.
+- **Three example dungeons** to try: a gentle first one, a key softlock, and a one-way drop trap. An example joins your dungeons only once you change it.
 
 ![Live results on the Sunken Cistern example](docs/screenshots/live-results.png)
 

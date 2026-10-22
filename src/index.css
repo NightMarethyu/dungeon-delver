@@ -826,13 +826,6 @@ button.big {
   text-decoration: none;
 }
 
-button.save-open {
-  border: 0;
-  background: none;
-  border-radius: 8px;
-  text-align: left;
-}
-
 .save-open strong {
   overflow: hidden;
   text-overflow: ellipsis;

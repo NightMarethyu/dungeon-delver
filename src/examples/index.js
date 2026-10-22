@@ -1,5 +1,5 @@
-// Original example dungeons, offered on the landing page. Opening one saves a
-// copy, so the examples themselves never change.
+// Original example dungeons, offered on the landing page. They open at
+// #/example/<id>, and only become a save of the visitor's own once changed.
 
 import emberSpire from './ember-spire.json'
 import mossyHollow from './mossy-hollow.json'

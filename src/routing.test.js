@@ -12,6 +12,8 @@ describe('parseHash', () => {
     ['#/scratch', { page: 'scratch' }],
     ['#/share', { page: 'home' }],
     ['#/share/N4Ig+-$x', { page: 'share', data: 'N4Ig+-$x' }],
+    ['#/example', { page: 'home' }],
+    ['#/example/mossy-hollow', { page: 'example', id: 'mossy-hollow' }],
   ])('reads %j', (hash, route) => {
     expect(parseHash(hash)).toEqual(route)
   })

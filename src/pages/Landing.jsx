@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { EXAMPLES } from '../examples/index.js'
 import { emptyDungeon } from '../model/dungeon.js'
 import { loadDungeon } from '../model/load.js'
-import { editHref, navigate, shareHref } from '../routing.js'
+import { editHref, exampleHref, navigate, shareHref } from '../routing.js'
 import { browserStorage, createSave, deleteSave, listSaves } from '../storage/saves.js'
 import { encodeShare } from '../storage/share.js'
 
@@ -46,23 +46,23 @@ function SavedDungeons({ saves, onDelete }) {
   )
 }
 
-function Examples({ onOpen }) {
+function Examples() {
   return (
     <ul className="save-list">
       {EXAMPLES.map(({ id, dungeon, blurb }) => (
         <li key={id}>
-          <button type="button" className="save-open" onClick={() => onOpen(dungeon)}>
+          <a className="save-open" href={exampleHref(id)}>
             <strong>{dungeon.name}</strong>
             <span className="muted">{blurb}</span>
-          </button>
+          </a>
         </li>
       ))}
     </ul>
   )
 }
 
-// Opens a dungeon as a new save. Where the browser won't save anything, it
-// opens through a share link instead, so it can still be looked at and edited.
+// Opens an imported dungeon as a new save. Where the browser won't save
+// anything, it opens through a share link instead, so it can still be edited.
 function openCopy(dungeon) {
   const id = createSave(browserStorage(), dungeon)
   navigate(id ? editHref(id) : shareHref(encodeShare(dungeon)))
@@ -135,7 +135,7 @@ export default function Landing() {
 
         <section aria-labelledby="examples">
           <h2 id="examples">Try an example</h2>
-          <Examples onOpen={openCopy} />
+          <Examples />
         </section>
 
         <section aria-labelledby="what-it-checks">

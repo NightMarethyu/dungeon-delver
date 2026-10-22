@@ -5,8 +5,10 @@ import ResultsBanner from '../components/panels/ResultsBanner.jsx'
 import SidePanel from '../components/panels/SidePanel.jsx'
 import { pathEdges, playbackMarks, roomMarks } from '../components/results.js'
 import { useDebounced } from '../components/useDebounced.js'
+import { EXAMPLES } from '../examples/index.js'
 import { emptyDungeon } from '../model/dungeon.js'
-import { HOME_HREF, editHref, navigate, shareHref } from '../routing.js'
+import { loadDungeon } from '../model/load.js'
+import { HOME_HREF, editHref, navigate, parseHash, shareHref } from '../routing.js'
 import { browserStorage, createSave, readSave, writeSave } from '../storage/saves.js'
 import { decodeShare, encodeShare } from '../storage/share.js'
 import { downloadText, exportFileName, exportJson } from '../storage/transfer.js'
@@ -19,32 +21,46 @@ const SAVE_STATUS = {
   failed: "Couldn't save. This browser may be blocking storage, or it's full.",
   off: "Not saved: this browser won't let the site store anything.",
   shared: 'Shared with you. Not saved until you save a copy.',
+  example: 'An example. Change anything and it joins your dungeons.',
 }
 
 /**
  * Keeps a saved dungeon up to date: writes it once edits pause, and right away
- * when the page is left. `id` null means there's nowhere to save.
+ * when the page is left. With no `savedId` there's nowhere to save, and
+ * `unsaved` says why, except for an example: its first change saves it as a
+ * new dungeon, and the URL moves to that save without reloading the editor.
  */
-function useAutosave(id, dungeon, shared) {
-  const [status, setStatus] = useState(id ? 'saved' : shared ? 'shared' : 'off')
+function useAutosave(savedId, dungeon, unsaved = 'off') {
+  const [status, setStatus] = useState(savedId ? 'saved' : unsaved)
+  const id = useRef(savedId)
   const written = useRef(dungeon)
   const pending = useRef(null)
+  const canSave = savedId !== null || unsaved === 'example'
 
   const flush = useCallback(() => {
     if (!pending.current) return null
-    const ok = writeSave(browserStorage(), id, pending.current)
+    const storage = browserStorage()
+    let ok
+    if (id.current) {
+      ok = writeSave(storage, id.current, pending.current)
+    } else {
+      id.current = createSave(storage, pending.current)
+      ok = id.current !== null
+      // Only while the example is still on screen, not when this runs on the way out.
+      if (ok && parseHash(window.location.hash).page === 'example') window.history.replaceState(null, '', editHref(id.current))
+    }
     written.current = pending.current
     pending.current = null
     return ok
-  }, [id])
+  }, [])
 
   useEffect(() => {
-    if (!id || dungeon === written.current) return
+    if (!canSave || dungeon === written.current) return
     pending.current = dungeon
     setStatus('saving')
     const timer = setTimeout(() => setStatus(flush() ? 'saved' : 'failed'), SAVE_DELAY)
     return () => clearTimeout(timer)
-  }, [id, dungeon, flush])
+  }, [canSave, dungeon, flush])
 
   // Don't lose the last edit when the tab closes or the page changes.
   useEffect(() => {
@@ -131,11 +147,24 @@ export function SharedBuilder({ data }) {
   return <Editor id={null} initial={initial} shared />
 }
 
-function Editor({ id, initial, shared = false }) {
+/**
+ * The builder on one of the example dungeons. It's only saved, as a new
+ * dungeon of the visitor's own, once they change something.
+ */
+export function ExampleBuilder({ exampleId }) {
+  const [initial] = useState(() => {
+    const example = EXAMPLES.find((e) => e.id === exampleId)
+    return example ? loadDungeon(example.dungeon).dungeon : null
+  })
+  if (!initial) return <Missing title="Example not found">There&apos;s no example by that name.</Missing>
+  return <Editor id={null} initial={initial} example />
+}
+
+function Editor({ id, initial, shared = false, example = false }) {
   const [dungeon, setDungeon] = useState(initial)
   // What's selected on the canvas: { kind: 'room' | 'edge', id } or null.
   const [selection, setSelection] = useState(null)
-  const saveStatus = useAutosave(id, dungeon, shared)
+  const saveStatus = useAutosave(id, dungeon, shared ? 'shared' : example ? 'example' : 'off')
 
   function saveCopy() {
     const copyId = createSave(browserStorage(), dungeon)
