@@ -1,0 +1,158 @@
+{
+  "version": 2,
+  "name": "Mossy Hollow",
+  "floors": [
+    {
+      "id": "1F",
+      "name": "Ground Floor"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "entrance",
+      "floor": "1F",
+      "label": "Entrance",
+      "graphPos": {
+        "x": 0,
+        "y": 280
+      },
+      "contents": [
+        {
+          "type": "smallKey"
+        }
+      ]
+    },
+    {
+      "id": "courtyard",
+      "floor": "1F",
+      "label": "Courtyard",
+      "graphPos": {
+        "x": 220,
+        "y": 280
+      },
+      "contents": []
+    },
+    {
+      "id": "cellar",
+      "floor": "1F",
+      "label": "Root Cellar",
+      "graphPos": {
+        "x": 220,
+        "y": 420
+      },
+      "contents": [
+        {
+          "type": "smallKey"
+        }
+      ]
+    },
+    {
+      "id": "fountain",
+      "floor": "1F",
+      "label": "Fairy Fountain",
+      "graphPos": {
+        "x": 220,
+        "y": 140
+      },
+      "contents": []
+    },
+    {
+      "id": "gallery",
+      "floor": "1F",
+      "label": "Moth Gallery",
+      "graphPos": {
+        "x": 440,
+        "y": 280
+      },
+      "contents": [
+        {
+          "type": "bigKey"
+        }
+      ]
+    },
+    {
+      "id": "shrine",
+      "floor": "1F",
+      "label": "Shrine Hall",
+      "graphPos": {
+        "x": 660,
+        "y": 280
+      },
+      "contents": []
+    },
+    {
+      "id": "boss",
+      "floor": "1F",
+      "label": "Thornback's Lair",
+      "graphPos": {
+        "x": 660,
+        "y": 140
+      },
+      "contents": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "entrance",
+      "to": "courtyard",
+      "kind": "door",
+      "gate": {
+        "type": "open"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e2",
+      "from": "courtyard",
+      "to": "cellar",
+      "kind": "passage",
+      "gate": {
+        "type": "open"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e3",
+      "from": "courtyard",
+      "to": "fountain",
+      "kind": "door",
+      "gate": {
+        "type": "open"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e4",
+      "from": "courtyard",
+      "to": "gallery",
+      "kind": "door",
+      "gate": {
+        "type": "smallKey"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e5",
+      "from": "gallery",
+      "to": "shrine",
+      "kind": "door",
+      "gate": {
+        "type": "smallKey"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e6",
+      "from": "shrine",
+      "to": "boss",
+      "kind": "door",
+      "gate": {
+        "type": "bigKey"
+      },
+      "oneWay": false
+    }
+  ],
+  "start": "entrance",
+  "goal": "boss"
+}
