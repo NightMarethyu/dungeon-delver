@@ -85,6 +85,9 @@ export function validateDungeon(dungeon) {
       problems.push(problem('warning', 'unknownEdgeKind', `${where} has an unknown kind "${edge.kind}".`, [edge.id]))
     }
     checkNamed(edge.gate, GATE_TYPES, where, 'Gate', problems, [edge.id])
+    if (edge.gate?.type === 'puzzle' && edge.gate.at != null && edge.gate.at !== edge.from && edge.gate.at !== edge.to) {
+      problems.push(problem('warning', 'puzzleRoomNotOnEdge', `${where} has its puzzle in a room it doesn't connect, so it opens from either side.`, [edge.id]))
+    }
   }
 
   return problems

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { doorlessNeighbors, mapConnections } from './doors.js'
+import { doorlessNeighbors, floorLinks, mapConnections } from './doors.js'
 import { sharedWall, spotBeside, touches, withMapLayout } from './grid.js'
 
 const room = (id, rect, extra = {}) => ({ id, floor: '1F', label: id, contents: [], rect, ...extra })
@@ -75,5 +75,15 @@ describe('withMapLayout and connections', () => {
     }
     const laid = withMapLayout(d)
     expect(mapConnections(laid.rooms, laid.edges).every((c) => c.door)).toBe(true)
+  })
+})
+
+describe('floorLinks', () => {
+  it("lists each room's connections to other floors, from either end", () => {
+    const rooms = [room('a', undefined), room('b', undefined), room('down', undefined, { floor: 'B1' })]
+    const d = { rooms, edges: [edge('e1', 'a', 'b'), edge('stairs', 'down', 'a', { kind: 'stairs' }), edge('lost', 'a', 'gone')] }
+    const links = floorLinks(d, rooms.slice(0, 2))
+    expect([...links.keys()]).toEqual(['a'])
+    expect(links.get('a')).toEqual([{ edge: d.edges[1], other: 'down' }])
   })
 })

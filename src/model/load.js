@@ -12,6 +12,8 @@ import { validateDungeon } from './validate.js'
 const MIGRATIONS = {
   // Version 2 added the optional rooms[].graphPos. Nothing to change.
   1: (raw) => raw,
+  // Version 3 added the puzzle gate. Nothing to change.
+  2: (raw) => raw,
 }
 
 const fatal = (code, message) => ({

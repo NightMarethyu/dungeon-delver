@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { emptyDungeon } from '../model/dungeon.js'
+import { CURRENT_VERSION, emptyDungeon } from '../model/dungeon.js'
 import { SAVES_KEY, createSave, deleteSave, listSaves, readSave, writeSave } from './saves.js'
 
 // A stand-in for localStorage.
@@ -38,7 +38,7 @@ describe('saves', () => {
   it('migrates old formats on read', () => {
     const storage = memoryStorage()
     storage.setItem(SAVES_KEY, JSON.stringify({ old: { updatedAt: 1, dungeon: { ...named('Old'), version: 1 } } }))
-    expect(readSave(storage, 'old').dungeon.version).toBe(2)
+    expect(readSave(storage, 'old').dungeon.version).toBe(CURRENT_VERSION)
   })
 
   it('overwrites and deletes', () => {

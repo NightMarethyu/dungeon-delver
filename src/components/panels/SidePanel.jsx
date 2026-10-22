@@ -13,6 +13,8 @@ import {
   updateEdge,
   updateRoom,
 } from '../../model/edit.js'
+import Icon from '../icons/Icon.jsx'
+import { contentIconName, gateIconName, passageIconName } from '../icons/icons.js'
 import { CONTENT_LABELS, GATE_LABELS, KIND_LABELS } from '../labels.js'
 
 const ITEM_LIST_ID = 'known-items'
@@ -22,15 +24,19 @@ function withType(thing, type) {
   return type === 'item' ? { type, name: thing.name ?? '' } : { type }
 }
 
-function Select({ label, value, options, labels, onChange }) {
+// A dropdown, with the chosen option's icon beside it when there is one.
+function Select({ label, value, options, labels, icon, onChange }) {
   return (
     <label className="field">
       <span>{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)}>
-        {options.map((o) => (
-          <option key={o} value={o}>{labels[o]}</option>
-        ))}
-      </select>
+      <span className="with-icon">
+        {icon && <Icon name={icon} size={24} />}
+        <select value={value} onChange={(e) => onChange(e.target.value)}>
+          {options.map((o) => (
+            <option key={o} value={o}>{labels[o]}</option>
+          ))}
+        </select>
+      </span>
     </label>
   )
 }
@@ -89,6 +95,7 @@ function RoomPanel({ room, dungeon, onChange, onSelect }) {
         {room.contents.length === 0 && <p className="muted">Nothing here.</p>}
         {room.contents.map((c, i) => (
           <div className="content-row" key={i}>
+            <Icon name={contentIconName(c)} size={22} />
             <select
               aria-label="Content type"
               value={c.type}
@@ -114,12 +121,13 @@ function RoomPanel({ room, dungeon, onChange, onSelect }) {
         ))}
         <div className="add-contents">
           {CONTENT_TYPES.map((t) => (
-            <button key={t} type="button" onClick={() => setContents([...room.contents, withType({}, t)])}>
-              + {CONTENT_LABELS[t]}
+            <button key={t} type="button" className="with-icon" onClick={() => setContents([...room.contents, withType({}, t)])}>
+              + <Icon name={contentIconName({ type: t })} size={16} /> {CONTENT_LABELS[t]}
             </button>
           ))}
         </div>
       </fieldset>
+      <PuzzleNote room={room} dungeon={dungeon} onSelect={onSelect} />
 
       <button
         type="button"
@@ -132,6 +140,30 @@ function RoomPanel({ room, dungeon, onChange, onSelect }) {
         Delete room
       </button>
     </>
+  )
+}
+
+// Which connections a puzzle in this room opens, each a link to select it.
+function PuzzleNote({ room, dungeon, onSelect }) {
+  const opens = dungeon.edges.filter((e) => e.gate.type === 'puzzle' && e.gate.at === room.id && (e.from === room.id || e.to === room.id))
+  if (opens.length === 0) return null
+  const name = (id) => dungeon.rooms.find((r) => r.id === id)?.label ?? id
+  return (
+    <p className="puzzle-note with-icon">
+      <Icon name="puzzle" size={20} />
+      <span>
+        Solving the puzzle here opens the way to{' '}
+        {opens.map((e, i) => (
+          <span key={e.id}>
+            {i > 0 && (i === opens.length - 1 ? ' and ' : ', ')}
+            <button type="button" className="link" onClick={() => onSelect({ kind: 'edge', id: e.id })}>
+              {name(e.from === room.id ? e.to : e.from)}
+            </button>
+          </span>
+        ))}
+        .
+      </span>
+    </p>
   )
 }
 
@@ -150,6 +182,7 @@ function EdgePanel({ edge, dungeon, onChange, onSelect }) {
         value={edge.kind}
         options={EDGE_KINDS}
         labels={KIND_LABELS}
+        icon={passageIconName(dungeon, edge) ?? 'door'}
         // Drops are one-way almost always, so default them to it.
         onChange={(kind) => update(kind === 'drop' ? { kind, oneWay: true } : { kind })}
       />
@@ -158,8 +191,25 @@ function EdgePanel({ edge, dungeon, onChange, onSelect }) {
         value={edge.gate.type}
         options={GATE_TYPES}
         labels={GATE_LABELS}
-        onChange={(type) => update({ gate: withType(edge.gate, type) })}
+        icon={gateIconName(edge.gate)}
+        // A new puzzle starts out in the room the connection leads from.
+        onChange={(type) => update({ gate: type === 'puzzle' ? { type, at: edge.from } : withType(edge.gate, type) })}
       />
+      {edge.gate.type === 'puzzle' && (
+        <label className="field">
+          <span>Solved from</span>
+          <select value={edge.gate.at === edge.from || edge.gate.at === edge.to ? edge.gate.at : ''} onChange={(e) => update({ gate: e.target.value ? { type: 'puzzle', at: e.target.value } : { type: 'puzzle' } })}>
+            <option value={edge.from}>Inside {name(edge.from)}</option>
+            <option value={edge.to}>Inside {name(edge.to)}</option>
+            <option value="">Either side (on the door itself)</option>
+          </select>
+          <span className="muted hint">
+            {edge.gate.at === edge.from || edge.gate.at === edge.to
+              ? `Opens once the player reaches ${name(edge.gate.at)}, then stays open both ways.`
+              : 'Anyone at the door can solve it, so it never blocks the way.'}
+          </span>
+        </label>
+      )}
       {edge.gate.type === 'item' && (
         <label className="field">
           <span>Item</span>
@@ -254,7 +304,7 @@ function FloorList({ dungeon, onChange }) {
           + Floor
         </button>
       </div>
-      <p className="muted hint">Pick a room&apos;s floor when it&apos;s selected.</p>
+      <p className="muted hint">List the top floor first, so stairs point the right way. Pick a room&apos;s floor when it&apos;s selected.</p>
     </fieldset>
   )
 }
@@ -285,6 +335,7 @@ function Help({ view }) {
             <li><strong>Add a room</strong> with the button, or double-click the grid. With a room selected, the button adds one beside it.</li>
             <li><strong>Move</strong> a room by dragging it, and <strong>resize</strong> the selected room from its corners.</li>
             <li><strong>Add a door</strong> by clicking a <strong>+</strong> on a wall two rooms share, or by dragging the arrow in the selected room&apos;s corner onto another room.</li>
+            <li><strong>Stairs and holes</strong> to other floors show inside their room. Click one to go to the room it leads to. Connect rooms on different floors in the graph, or by moving a room to another floor here.</li>
             <li><strong>Select</strong> a room or door to edit it here, and rename it. Click empty space to come back.</li>
           </>
         ) : (

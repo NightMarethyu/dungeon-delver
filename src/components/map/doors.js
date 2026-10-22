@@ -49,3 +49,22 @@ export function doorlessNeighbors(rooms, edges, id) {
     .filter((r) => r.id !== id && touches(room.rect, r.rect) && !edges.some((e) => connects(e, id, r.id)))
     .map((r) => r.id)
 }
+
+/**
+ * The connections from each of `rooms` to rooms on other floors, which the
+ * map shows as stairs or holes inside the room rather than as doors.
+ * @returns {Map<string, { edge: object, other: string }[]>} by room id
+ */
+export function floorLinks(dungeon, rooms) {
+  const floorOf = new Map(dungeon.rooms.map((r) => [r.id, r.floor]))
+  const links = new Map()
+  for (const room of rooms) {
+    for (const edge of dungeon.edges) {
+      const other = edge.from === room.id ? edge.to : edge.to === room.id ? edge.from : null
+      if (other === null || !floorOf.has(other) || floorOf.get(other) === room.floor) continue
+      if (!links.has(room.id)) links.set(room.id, [])
+      links.get(room.id).push({ edge, other })
+    }
+  }
+  return links
+}

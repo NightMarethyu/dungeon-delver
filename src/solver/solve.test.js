@@ -90,6 +90,36 @@ describe('solve', () => {
     expect(result.beatable).toBe(true)
   })
 
+  it('opens a puzzle with no room given from either side', () => {
+    const result = solveRooms({ start: [], goal: [] }, [['door', 'goal', 'start', { type: 'puzzle' }]])
+    expect(result.beatable).toBe(true)
+  })
+
+  it('keeps a puzzle solved after a drop, on the critical path too', () => {
+    const result = solveRooms(
+      { start: [], pit: [{ type: 'item', name: 'hookshot' }], goal: [] },
+      [
+        ['drop', 'start', 'pit', undefined, { oneWay: true }],
+        ['ladder', 'pit', 'start', { type: 'puzzle', at: 'start' }],
+        ['gap', 'start', 'goal', { type: 'item', name: 'hookshot' }],
+      ],
+    )
+    expect(result.softlocks).toEqual([])
+    expect(result.criticalPath).toEqual(['start', 'pit', 'start', 'goal'])
+  })
+
+  it('counts a drop past an unsolved puzzle as a softlock', () => {
+    const result = solveRooms(
+      { start: [], pit: [], goal: [] },
+      [
+        ['drop', 'start', 'pit', undefined, { oneWay: true }],
+        ['ladder', 'pit', 'start', { type: 'puzzle', at: 'pit' }],
+        ['e1', 'start', 'goal', { type: 'puzzle', at: 'goal' }],
+      ],
+    )
+    expect(result.beatable).toBe(false)
+  })
+
   it('handles a locked one-way door', () => {
     const result = solveRooms({ start: [KEY], goal: [] }, [['door', 'start', 'goal', KEY, { oneWay: true }]])
     expect(result.beatable).toBe(true)

@@ -55,8 +55,9 @@ const sortedKey = (set) => [...set].sort().join(',')
 
 /** @returns {string[] | null} room ids from start to goal, or null if none was found */
 export function criticalPath(graph, { maxSteps }) {
-  // Only rooms with something in them change what the player holds.
-  const hasContents = (room) => graph.contents.get(room).length > 0
+  // Only rooms with something in them, or a puzzle to solve, change what the
+  // player can do.
+  const hasContents = (room) => graph.contents.get(room).length > 0 || graph.puzzleRooms.has(room)
   const keyOf = (s) => `${s.room}|${sortedKey(s.collected)}|${sortedKey(s.opened)}`
 
   const start = {
