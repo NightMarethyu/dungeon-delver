@@ -19,6 +19,17 @@ export function withGraphLayout(dungeon) {
   }
 }
 
+// A spot in the graph for a room added somewhere else (the map): a row below
+// every placed room, so it doesn't land on one.
+export function belowAll(rooms) {
+  const placed = rooms.filter((r) => r.graphPos)
+  if (placed.length === 0) return gridPosition(0)
+  return {
+    x: Math.min(...placed.map((r) => r.graphPos.x)),
+    y: Math.max(...placed.map((r) => r.graphPos.y)) + GRID_Y,
+  }
+}
+
 // Nudges `pos` down and right until no room sits exactly there, so rooms added
 // one after another don't stack.
 export function freePosition(pos, rooms, step = 24) {

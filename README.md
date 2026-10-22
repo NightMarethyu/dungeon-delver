@@ -4,13 +4,15 @@ Exploring custom Zelda dungeons and whether they would work.
 
 Sketch how a dungeon's rooms connect and what locks each connection (small keys, the big key, items like the hookshot, one-way drops). Dungeon Delver tells you whether the dungeon can be beaten, how a player could softlock, which rooms are optional, and what the critical path is.
 
-It's a static site, hosted on GitHub Pages, with no accounts and no server. Version 0.1 is the graph editor; a map view comes next.
+It's a static site, hosted on GitHub Pages, with no accounts and no server. Version 0.1 is the graph editor; the map view is in progress.
 
 ![The landing page, with saved dungeons and examples](docs/screenshots/landing-page.png)
 
 ## Features
 
 - **Build a dungeon as a graph.** Add, rename, move, and delete rooms, and drag between them to connect them. The side panel edits a room's contents (small keys, the big key, named items) or a connection's lock and kind (door, stairs, drop, passage, one-way). Pick the start and goal rooms, and sort rooms into floors.
+- **Lay it out as a map.** Switch the builder from Graph to Map to see one floor at a time, with rooms as rectangles on a snap grid. Drag rooms to move them, drag a corner to resize, and double-click the grid to add a room. Rooms that have never been on the map are placed automatically, roughly where they sit in the graph. Connections and solver highlights on the map are still to come.
+- **Light and dark themes.** The site follows your system setting until you pick one with the toggle in the header.
 - **Live results.** The solver re-checks the dungeon as you edit. A banner says whether it's beatable and how a player could get stuck, and the canvas highlights the critical path, optional rooms, and unreachable rooms.
 - **Softlock playback.** Step through each way a player can get stuck, one door or drop at a time, and see which rooms they're trapped in.
 - **Saved in your browser.** Dungeons save themselves in `localStorage`, several at once, and are listed on the front page.
@@ -19,6 +21,8 @@ It's a static site, hosted on GitHub Pages, with no accounts and no server. Vers
 - **Three example dungeons** to try: a gentle first one, a key softlock, and a one-way drop trap. An example joins your dungeons only once you change it.
 
 ![Live results on the Sunken Cistern example](docs/screenshots/live-results.png)
+
+![The map view of the Sunken Cistern's lower floor, in the dark theme](docs/screenshots/map-view.png)
 
 ![Playing back a softlock: the wasted key leaves the player stuck](docs/screenshots/softlock-playback.png)
 
@@ -44,6 +48,7 @@ Pushes to `main` run lint, tests, and the build, then deploy to GitHub Pages.
 | `src/solver/` | Pure solver logic and its tests |
 | `src/solver/__fixtures__/` | Test dungeons as JSON, with the results the solver should give |
 | `src/components/graph/` | The React Flow graph editor |
+| `src/components/map/` | The SVG map editor, and its pure grid geometry (`grid.js`) |
 | `src/components/panels/` | The side panel (selected room or connection, or the dungeon's start, goal, and floors), the solver results banner, and softlock playback |
 | `src/components/results.js` | Turns solver results into banner text, highlights, and playback marks |
 | `src/pages/` | The landing page and the builder |

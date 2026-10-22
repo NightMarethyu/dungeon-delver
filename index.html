@@ -6,6 +6,15 @@
     <meta name="description" content="Dungeon Delver: sketch how a dungeon's rooms connect and check whether it can be beaten or softlocked." />
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
     <title>Dungeon Delver</title>
+    <script>
+      // Apply a remembered light or dark pick before the page draws (see src/theme.js).
+      try {
+        const theme = localStorage.getItem('dungeon-delver:theme')
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme
+      } catch {
+        // No storage: follow the system setting.
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

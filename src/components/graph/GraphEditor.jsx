@@ -14,6 +14,7 @@ import { addEdge, addRoom, removeEdge, removeRoom, updateRoom } from '../../mode
 import DungeonEdge from './DungeonEdge.jsx'
 import { freePosition } from './layout.js'
 import RoomNode from './RoomNode.jsx'
+import { useTheme } from '../../theme.js'
 
 const nodeTypes = { room: RoomNode }
 const edgeTypes = { dungeon: DungeonEdge }
@@ -37,6 +38,7 @@ const HALF_ROOM = { x: 60, y: 22 }
 function Canvas({ dungeon, onChange, selection, onSelect, highlights }) {
   const wrapper = useRef(null)
   const { screenToFlowPosition } = useReactFlow()
+  const theme = useTheme()
   // React Flow measures each node after it renders. Keep those sizes, since
   // nodes rebuilt without them would be measured again from scratch.
   const [sizes, setSizes] = useState({})
@@ -145,7 +147,7 @@ function Canvas({ dungeon, onChange, selection, onSelect, highlights }) {
         multiSelectionKeyCode={null}
         selectionKeyCode={null}
         zoomOnDoubleClick={false}
-        colorMode="system"
+        colorMode={theme}
         fitView
         fitViewOptions={{ maxZoom: 1 }}
       >
