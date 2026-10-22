@@ -1,0 +1,232 @@
+{
+  "version": 2,
+  "name": "Ember Spire",
+  "floors": [
+    {
+      "id": "1F",
+      "name": "Ground Floor"
+    },
+    {
+      "id": "2F",
+      "name": "Second Floor"
+    },
+    {
+      "id": "3F",
+      "name": "Spire Top"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "foyer",
+      "floor": "1F",
+      "label": "Foyer",
+      "graphPos": {
+        "x": 0,
+        "y": 420
+      },
+      "contents": []
+    },
+    {
+      "id": "cinder",
+      "floor": "1F",
+      "label": "Cinder Pit",
+      "graphPos": {
+        "x": 286,
+        "y": 280
+      },
+      "contents": [
+        {
+          "type": "smallKey"
+        }
+      ]
+    },
+    {
+      "id": "vault",
+      "floor": "1F",
+      "label": "Sealed Vault",
+      "graphPos": {
+        "x": 572,
+        "y": 420
+      },
+      "contents": []
+    },
+    {
+      "id": "landing",
+      "floor": "2F",
+      "label": "Ash Landing",
+      "graphPos": {
+        "x": 0,
+        "y": 140
+      },
+      "contents": [
+        {
+          "type": "smallKey"
+        }
+      ]
+    },
+    {
+      "id": "bellows",
+      "floor": "2F",
+      "label": "Bellows Room",
+      "graphPos": {
+        "x": 286,
+        "y": 140
+      },
+      "contents": []
+    },
+    {
+      "id": "forge",
+      "floor": "2F",
+      "label": "Forge",
+      "graphPos": {
+        "x": 0,
+        "y": 0
+      },
+      "contents": [
+        {
+          "type": "item",
+          "name": "Flame Lantern"
+        }
+      ]
+    },
+    {
+      "id": "brazier",
+      "floor": "2F",
+      "label": "Brazier Hall",
+      "graphPos": {
+        "x": 572,
+        "y": 140
+      },
+      "contents": []
+    },
+    {
+      "id": "top",
+      "floor": "3F",
+      "label": "Spire Summit",
+      "graphPos": {
+        "x": 572,
+        "y": 0
+      },
+      "contents": [
+        {
+          "type": "bigKey"
+        }
+      ]
+    },
+    {
+      "id": "throne",
+      "floor": "3F",
+      "label": "Ember Throne",
+      "graphPos": {
+        "x": 858,
+        "y": 0
+      },
+      "contents": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "foyer",
+      "to": "landing",
+      "kind": "stairs",
+      "gate": {
+        "type": "open"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e2",
+      "from": "landing",
+      "to": "bellows",
+      "kind": "door",
+      "gate": {
+        "type": "open"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e3",
+      "from": "bellows",
+      "to": "cinder",
+      "kind": "drop",
+      "gate": {
+        "type": "open"
+      },
+      "oneWay": true
+    },
+    {
+      "id": "e4",
+      "from": "cinder",
+      "to": "foyer",
+      "kind": "door",
+      "gate": {
+        "type": "open"
+      },
+      "oneWay": true
+    },
+    {
+      "id": "e5",
+      "from": "landing",
+      "to": "forge",
+      "kind": "door",
+      "gate": {
+        "type": "smallKey"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e6",
+      "from": "bellows",
+      "to": "brazier",
+      "kind": "door",
+      "gate": {
+        "type": "item",
+        "name": "Flame Lantern"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e7",
+      "from": "brazier",
+      "to": "vault",
+      "kind": "drop",
+      "gate": {
+        "type": "open"
+      },
+      "oneWay": true
+    },
+    {
+      "id": "e8",
+      "from": "vault",
+      "to": "foyer",
+      "kind": "door",
+      "gate": {
+        "type": "bigKey"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e9",
+      "from": "brazier",
+      "to": "top",
+      "kind": "stairs",
+      "gate": {
+        "type": "smallKey"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e10",
+      "from": "top",
+      "to": "throne",
+      "kind": "door",
+      "gate": {
+        "type": "bigKey"
+      },
+      "oneWay": false
+    }
+  ],
+  "start": "foyer",
+  "goal": "throne"
+}

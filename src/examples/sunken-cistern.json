@@ -1,0 +1,213 @@
+{
+  "version": 2,
+  "name": "Sunken Cistern",
+  "floors": [
+    {
+      "id": "1F",
+      "name": "Ground Floor"
+    },
+    {
+      "id": "B1",
+      "name": "Cistern"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "gatehouse",
+      "floor": "1F",
+      "label": "Gatehouse",
+      "graphPos": {
+        "x": 0,
+        "y": 0
+      },
+      "contents": [
+        {
+          "type": "smallKey"
+        }
+      ]
+    },
+    {
+      "id": "pump",
+      "floor": "1F",
+      "label": "Pump Room",
+      "graphPos": {
+        "x": 220,
+        "y": 0
+      },
+      "contents": []
+    },
+    {
+      "id": "storeroom",
+      "floor": "1F",
+      "label": "Storeroom",
+      "graphPos": {
+        "x": 220,
+        "y": -140
+      },
+      "contents": [
+        {
+          "type": "item",
+          "name": "Rupee Pouch"
+        }
+      ]
+    },
+    {
+      "id": "stairwell",
+      "floor": "1F",
+      "label": "Stairwell",
+      "graphPos": {
+        "x": 440,
+        "y": 0
+      },
+      "contents": []
+    },
+    {
+      "id": "lowerStairs",
+      "floor": "B1",
+      "label": "Lower Stairwell",
+      "graphPos": {
+        "x": 440,
+        "y": 140
+      },
+      "contents": []
+    },
+    {
+      "id": "eelPool",
+      "floor": "B1",
+      "label": "Eel Pool",
+      "graphPos": {
+        "x": 220,
+        "y": 140
+      },
+      "contents": [
+        {
+          "type": "item",
+          "name": "Grapple Hook"
+        }
+      ]
+    },
+    {
+      "id": "ledge",
+      "floor": "B1",
+      "label": "High Ledge",
+      "graphPos": {
+        "x": -110,
+        "y": 140
+      },
+      "contents": [
+        {
+          "type": "smallKey"
+        }
+      ]
+    },
+    {
+      "id": "valve",
+      "floor": "B1",
+      "label": "Valve Room",
+      "graphPos": {
+        "x": 220,
+        "y": 280
+      },
+      "contents": [
+        {
+          "type": "bigKey"
+        }
+      ]
+    },
+    {
+      "id": "boss",
+      "floor": "B1",
+      "label": "Drowned King's Chamber",
+      "graphPos": {
+        "x": 660,
+        "y": 140
+      },
+      "contents": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "gatehouse",
+      "to": "pump",
+      "kind": "door",
+      "gate": {
+        "type": "open"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e2",
+      "from": "pump",
+      "to": "storeroom",
+      "kind": "door",
+      "gate": {
+        "type": "smallKey"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e3",
+      "from": "pump",
+      "to": "stairwell",
+      "kind": "door",
+      "gate": {
+        "type": "smallKey"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e4",
+      "from": "stairwell",
+      "to": "lowerStairs",
+      "kind": "stairs",
+      "gate": {
+        "type": "open"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e5",
+      "from": "lowerStairs",
+      "to": "eelPool",
+      "kind": "door",
+      "gate": {
+        "type": "open"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e6",
+      "from": "eelPool",
+      "to": "ledge",
+      "kind": "passage",
+      "gate": {
+        "type": "item",
+        "name": "Grapple Hook"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e7",
+      "from": "eelPool",
+      "to": "valve",
+      "kind": "door",
+      "gate": {
+        "type": "smallKey"
+      },
+      "oneWay": false
+    },
+    {
+      "id": "e8",
+      "from": "lowerStairs",
+      "to": "boss",
+      "kind": "door",
+      "gate": {
+        "type": "bigKey"
+      },
+      "oneWay": false
+    }
+  ],
+  "start": "gatehouse",
+  "goal": "boss"
+}

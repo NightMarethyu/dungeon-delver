@@ -158,6 +158,12 @@ select {
   color: var(--warn);
 }
 
+.header-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-self: center;
+}
+
 .not-found {
   max-width: 32rem;
   margin: 4rem auto;
@@ -767,6 +773,17 @@ button.big {
   padding: 0.6rem 1.2rem;
 }
 
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.import-error {
+  margin: 0.75rem 0 0;
+  color: var(--danger);
+}
+
 .landing-body {
   display: flex;
   flex-direction: column;
@@ -807,6 +824,13 @@ button.big {
   padding: 0.7rem 0.9rem;
   color: inherit;
   text-decoration: none;
+}
+
+button.save-open {
+  border: 0;
+  background: none;
+  border-radius: 8px;
+  text-align: left;
 }
 
 .save-open strong {

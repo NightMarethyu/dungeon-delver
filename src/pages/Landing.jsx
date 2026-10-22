@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { EXAMPLES } from '../examples/index.js'
 import { emptyDungeon } from '../model/dungeon.js'
-import { editHref, navigate } from '../routing.js'
+import { loadDungeon } from '../model/load.js'
+import { editHref, navigate, shareHref } from '../routing.js'
 import { browserStorage, createSave, deleteSave, listSaves } from '../storage/saves.js'
+import { encodeShare } from '../storage/share.js'
 
 const FEATURES = [
   {
@@ -43,9 +46,33 @@ function SavedDungeons({ saves, onDelete }) {
   )
 }
 
+function Examples({ onOpen }) {
+  return (
+    <ul className="save-list">
+      {EXAMPLES.map(({ id, dungeon, blurb }) => (
+        <li key={id}>
+          <button type="button" className="save-open" onClick={() => onOpen(dungeon)}>
+            <strong>{dungeon.name}</strong>
+            <span className="muted">{blurb}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+// Opens a dungeon as a new save. Where the browser won't save anything, it
+// opens through a share link instead, so it can still be looked at and edited.
+function openCopy(dungeon) {
+  const id = createSave(browserStorage(), dungeon)
+  navigate(id ? editHref(id) : shareHref(encodeShare(dungeon)))
+}
+
 /** The front page: what the tool does, a way to start, and your saved dungeons. */
 export default function Landing() {
   const [saves, setSaves] = useState(() => listSaves(browserStorage()))
+  const [importError, setImportError] = useState(null)
+  const fileInput = useRef(null)
 
   useEffect(() => {
     document.title = 'Dungeon Delver'
@@ -54,6 +81,19 @@ export default function Landing() {
   function startNew() {
     const id = createSave(browserStorage(), emptyDungeon())
     navigate(id ? editHref(id) : '#/scratch')
+  }
+
+  async function importFile(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    const { dungeon, problems } = loadDungeon(await file.text())
+    if (!dungeon) {
+      setImportError(`Couldn't import ${file.name}: ${problems[0].message}`)
+      return
+    }
+    setImportError(null)
+    openCopy(dungeon)
   }
 
   function remove(save) {
@@ -71,15 +111,31 @@ export default function Landing() {
           Sketch how the rooms of a Zelda-style dungeon connect and what locks each door. Dungeon Delver tries every order of play and tells
           you whether the goal can be reached, and every way a player could lock themselves out of it.
         </p>
-        <button type="button" className="primary big" onClick={startNew}>
-          + New dungeon
-        </button>
+        <div className="hero-actions">
+          <button type="button" className="primary big" onClick={startNew}>
+            + New dungeon
+          </button>
+          <button type="button" className="big" onClick={() => fileInput.current?.click()}>
+            Import JSON
+          </button>
+          <input ref={fileInput} type="file" accept=".json,application/json" hidden onChange={importFile} />
+        </div>
+        {importError && (
+          <p className="import-error" role="alert">
+            {importError}
+          </p>
+        )}
       </header>
 
       <main className="landing-body">
         <section aria-labelledby="your-dungeons">
           <h2 id="your-dungeons">Your dungeons</h2>
           <SavedDungeons saves={saves} onDelete={remove} />
+        </section>
+
+        <section aria-labelledby="examples">
+          <h2 id="examples">Try an example</h2>
+          <Examples onOpen={openCopy} />
         </section>
 
         <section aria-labelledby="what-it-checks">
