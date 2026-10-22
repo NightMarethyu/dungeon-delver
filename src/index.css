@@ -1298,6 +1298,121 @@ button.big {
   }
 }
 
+/* Solver highlights on the map, matching the graph's */
+
+.map-room-body .room-tags {
+  margin-bottom: 0;
+}
+
+.map-room.mark-path .map-room-box {
+  stroke: var(--path);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--path) 60%, transparent));
+}
+
+.map-room.mark-optional {
+  opacity: 0.55;
+}
+
+.map-room.mark-unreachable .map-room-box {
+  stroke: var(--unreachable);
+  stroke-dasharray: 8 5;
+}
+
+.map-room.mark-here .map-room-box {
+  stroke: var(--selected);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--selected) 60%, transparent));
+}
+
+.map-room.mark-stuck .map-room-box {
+  stroke: var(--bad);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--bad) 60%, transparent));
+}
+
+.map-room.mark-out {
+  opacity: 0.4;
+}
+
+/* The selection outline wins over the solver's. */
+.map-room.selected .map-room-box {
+  stroke: var(--selected);
+}
+
+.map-connection.on-path .map-door,
+.map-connection.on-path .map-door-badge circle {
+  filter: drop-shadow(0 0 4px var(--path));
+}
+
+.map-connection.on-path.gate-open .map-door {
+  stroke: var(--path);
+}
+
+.map-connection.on-path .map-link {
+  stroke: var(--path);
+  stroke-width: 3.5;
+}
+
+.map-connection.pb-opened .map-door,
+.map-connection.pb-opened .map-link {
+  filter: drop-shadow(0 0 3px var(--gate-smallKey));
+}
+
+.map-connection.pb-current .map-door,
+.map-connection.pb-current .map-door-badge circle,
+.map-connection.pb-current .map-link {
+  stroke: var(--selected);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 5px var(--selected));
+}
+
+.map-connection.pb-current .map-link {
+  stroke-width: 4;
+  animation: playback-dash 0.8s linear infinite;
+}
+
+.map-floor-link.on-path {
+  border-color: var(--path);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--path) 35%, transparent);
+}
+
+.map-floor-link.pb-opened {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gate-smallKey) 45%, transparent);
+}
+
+.map-floor-link.pb-current {
+  border-color: var(--selected);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--selected) 45%, transparent);
+}
+
+.floor-mark {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  margin-right: 0.35rem;
+  vertical-align: 0.05rem;
+}
+
+.floor-mark-path {
+  background: var(--path);
+}
+
+.floor-mark-here {
+  background: var(--selected);
+}
+
+.floor-mark-stuck {
+  background: var(--bad);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-connection.pb-current .map-link {
+    animation: none;
+  }
+}
+
 .map-connect-knob {
   cursor: crosshair;
 }
