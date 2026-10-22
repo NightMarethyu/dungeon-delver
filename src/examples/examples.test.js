@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { mapConnections } from '../components/map/doors.js'
+import { withMapLayout } from '../components/map/grid.js'
 import { loadDungeon } from '../model/load.js'
 import { solve } from '../solver/index.js'
 import { EXAMPLES } from './index.js'
@@ -13,6 +15,14 @@ const EXPECTED = {
 
 describe.each(EXAMPLES)('example $id', ({ id, dungeon: raw }) => {
   const { dungeon, problems } = loadDungeon(raw)
+
+  it('lays out on the map with every door in a shared wall', () => {
+    const laid = withMapLayout(dungeon)
+    for (const floor of laid.floors) {
+      const apart = mapConnections(laid.rooms.filter((r) => r.floor === floor.id), laid.edges).filter((c) => !c.door)
+      expect(apart.map((c) => c.edge.id)).toEqual([])
+    }
+  })
 
   it('loads cleanly in the current format', () => {
     expect(problems).toEqual([])

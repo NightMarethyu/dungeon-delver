@@ -17,8 +17,9 @@ import { downloadText, exportFileName, exportJson } from '../storage/transfer.js
 import { replay, solve } from '../solver/index.js'
 
 const SAVE_DELAY = 400
-const VIEW_KEY = 'dungeon-delver:view'
-const VIEWS = { graph: 'Graph', map: 'Map' }
+// Renamed when the map became the default, so the old saved default doesn't stick.
+const VIEW_KEY = 'dungeon-delver:editor-view'
+const VIEWS = { map: 'Map', graph: 'Graph' }
 const SAVE_STATUS = {
   saved: 'Saved in this browser',
   saving: 'Saving…',
@@ -98,25 +99,27 @@ function Missing({ title, children }) {
 }
 
 /**
- * Which editor is showing, 'graph' or 'map'. Both edit the same dungeon; the
- * choice is only a preference, remembered in this browser.
+ * Which editor is showing, 'map' or 'graph'. Both edit the same dungeon. The
+ * map is the default, as it needs no graph theory; picking the other one is
+ * remembered in this browser.
  */
 function useEditorView() {
   const [view, setView] = useState(() => {
     try {
-      return window.localStorage.getItem(VIEW_KEY) === 'map' ? 'map' : 'graph'
+      return window.localStorage.getItem(VIEW_KEY) === 'graph' ? 'graph' : 'map'
     } catch {
-      return 'graph'
+      return 'map'
     }
   })
-  useEffect(() => {
+  function choose(next) {
+    setView(next)
     try {
-      window.localStorage.setItem(VIEW_KEY, view)
+      window.localStorage.setItem(VIEW_KEY, next)
     } catch {
       // Storage can be off limits; the view just isn't remembered.
     }
-  }, [view])
-  return [view, setView]
+  }
+  return [view, choose]
 }
 
 function ViewSwitch({ view, onChange }) {
@@ -283,7 +286,7 @@ function Editor({ id, initial, shared = false, example = false }) {
             highlights={highlights}
           />
         </div>
-        <SidePanel dungeon={dungeon} selection={selection} onChange={setDungeon} onSelect={setSelection} />
+        <SidePanel dungeon={dungeon} selection={selection} onChange={setDungeon} onSelect={setSelection} view={view} />
       </main>
     </div>
   )

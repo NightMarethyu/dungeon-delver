@@ -10,8 +10,8 @@ It's a static site, hosted on GitHub Pages, with no accounts and no server. Vers
 
 ## Features
 
-- **Build a dungeon as a graph.** Add, rename, move, and delete rooms, and drag between them to connect them. The side panel edits a room's contents (small keys, the big key, named items) or a connection's lock and kind (door, stairs, drop, passage, one-way). Pick the start and goal rooms, and sort rooms into floors.
-- **Lay it out as a map.** Switch the builder from Graph to Map to see one floor at a time, with rooms as rectangles on a snap grid. Drag rooms to move them, drag a corner to resize, and double-click the grid to add a room. Rooms that have never been on the map are placed automatically, roughly where they sit in the graph. Connections and solver highlights on the map are still to come.
+- **Lay out the dungeon as a map.** The builder opens on the map: one floor at a time, with rooms as rectangles on a snap grid. Drag rooms to move them, drag a corner to resize, and double-click the grid to add a room. Rooms connected on the same floor sit side by side with a door in their shared wall, marked with its lock. Add a door by clicking the **+** on a shared wall or dragging the arrow in a selected room's corner onto another room, and when you put a room against another the map offers to add one. Rooms that have never been on the map are placed automatically, beside the rooms they connect to. Solver highlights on the map are still to come.
+- **Or build it as a graph.** Switch from Map to Graph to add, rename, move, and delete rooms as nodes, and drag between them to connect them. The side panel edits a room's contents (small keys, the big key, named items) or a connection's lock and kind (door, stairs, drop, passage, one-way). Pick the start and goal rooms, and sort rooms into floors.
 - **Light and dark themes.** The site follows your system setting until you pick one with the toggle in the header.
 - **Live results.** The solver re-checks the dungeon as you edit. A banner says whether it's beatable and how a player could get stuck, and the canvas highlights the critical path, optional rooms, and unreachable rooms.
 - **Softlock playback.** Step through each way a player can get stuck, one door or drop at a time, and see which rooms they're trapped in.
@@ -22,7 +22,7 @@ It's a static site, hosted on GitHub Pages, with no accounts and no server. Vers
 
 ![Live results on the Sunken Cistern example](docs/screenshots/live-results.png)
 
-![The map view of the Sunken Cistern's lower floor, in the dark theme](docs/screenshots/map-view.png)
+![The map view of the Sunken Cistern's lower floor, with locked doors in shared walls, in the dark theme](docs/screenshots/map-view.png)
 
 ![Playing back a softlock: the wasted key leaves the player stuck](docs/screenshots/softlock-playback.png)
 

@@ -14,3 +14,6 @@ export function thingText(thing) {
   if (thing.type === 'item') return `${ICONS.item} ${thing.name || 'item?'}`
   return `${ICONS[thing.type] ?? ''} ${CONTENT_LABELS[thing.type] ?? thing.type}`.trim()
 }
+
+// The icon for a gate, like 🔑 for a small-key door. Open gates have none.
+export const gateIcon = (gate) => (gate?.type === 'open' ? '' : ICONS[gate?.type] ?? '')
