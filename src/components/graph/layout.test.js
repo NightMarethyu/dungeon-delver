@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { emptyDungeon } from '../../model/dungeon.js'
-import { borderPoint, freePosition, gridPosition, withGraphLayout } from './layout.js'
+import { belowAll, borderPoint, freePosition, gridPosition, withGraphLayout } from './layout.js'
 
 describe('withGraphLayout', () => {
   it('places only the rooms that have no position', () => {
@@ -37,5 +37,13 @@ describe('borderPoint', () => {
 
   it('returns the center when the target is the center', () => {
     expect(borderPoint(rect, { x: 50, y: 20 })).toEqual({ x: 50, y: 20 })
+  })
+})
+
+describe('belowAll', () => {
+  it('starts a row under the lowest placed room', () => {
+    const rooms = [{ graphPos: { x: 40, y: 0 } }, { graphPos: { x: -20, y: 300 } }, {}]
+    expect(belowAll(rooms)).toEqual({ x: -20, y: 440 })
+    expect(belowAll([])).toEqual(gridPosition(0))
   })
 })

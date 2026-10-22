@@ -1,52 +1,39 @@
 :root {
-  --bg: #f6f4ef;
-  --surface: #ffffff;
-  --text: #1d2330;
-  --muted: #5d6475;
-  --border: #d9d5cc;
-  --accent: #2f6f5e;
-  --accent-text: #ffffff;
-  --danger: #b3261e;
-  --selected: #d08a14;
+  /* Each color is light-dark(light, dark). The system setting picks one,
+     unless the theme toggle has set data-theme (see src/theme.js). */
+  color-scheme: light dark;
+  --bg: light-dark(#f6f4ef, #121218);
+  --surface: light-dark(#ffffff, #1c1c24);
+  --text: light-dark(#1d2330, #e8e6e1);
+  --muted: light-dark(#5d6475, #9aa0ad);
+  --border: light-dark(#d9d5cc, #353542);
+  --accent: light-dark(#2f6f5e, #4fae93);
+  --accent-text: light-dark(#ffffff, #0d1512);
+  --danger: light-dark(#b3261e, #ef6b62);
+  --selected: light-dark(#d08a14, #f0b23e);
   /* One color per gate and content type, shared by edges, arrows, and chips. */
-  --gate-open: #7a8090;
-  --gate-smallKey: #b7791f;
-  --gate-bigKey: #b3261e;
-  --gate-item: #2b6cb0;
+  --gate-open: light-dark(#7a8090, #8d93a3);
+  --gate-smallKey: light-dark(#b7791f, #e0a43a);
+  --gate-bigKey: light-dark(#b3261e, #ef6b62);
+  --gate-item: light-dark(#2b6cb0, #6aa8ef);
   /* Solver results: banner tones and room highlights. */
-  --good: #2f7d4f;
-  --warn: #b7791f;
-  --bad: #b3261e;
-  --info: #2b6cb0;
-  --path: #2f9e6e;
-  --unreachable: #b3261e;
+  --good: light-dark(#2f7d4f, #5cc48a);
+  --warn: light-dark(#b7791f, #e0a43a);
+  --bad: light-dark(#b3261e, #ef6b62);
+  --info: light-dark(#2b6cb0, #6aa8ef);
+  --path: light-dark(#2f9e6e, #4fd19a);
+  --unreachable: light-dark(#b3261e, #ef6b62);
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
   background: var(--bg);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #121218;
-    --surface: #1c1c24;
-    --text: #e8e6e1;
-    --muted: #9aa0ad;
-    --border: #353542;
-    --accent: #4fae93;
-    --accent-text: #0d1512;
-    --danger: #ef6b62;
-    --selected: #f0b23e;
-    --gate-open: #8d93a3;
-    --gate-smallKey: #e0a43a;
-    --gate-bigKey: #ef6b62;
-    --gate-item: #6aa8ef;
-    --good: #5cc48a;
-    --warn: #e0a43a;
-    --bad: #ef6b62;
-    --info: #6aa8ef;
-    --path: #4fd19a;
-    --unreachable: #ef6b62;
-  }
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
 }
 
 body {
@@ -876,4 +863,216 @@ button.big {
 
 .landing-footer a {
   color: inherit;
+}
+
+.landing-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.landing-top .eyebrow {
+  margin: 0;
+}
+
+.theme-toggle {
+  white-space: nowrap;
+}
+
+/* Graph / map switch */
+
+.view-switch {
+  display: flex;
+}
+
+.view-switch button {
+  border-radius: 0;
+}
+
+.view-switch button:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.view-switch button:last-child {
+  border-radius: 0 6px 6px 0;
+  margin-left: -1px;
+}
+
+.view-switch button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+/* Map view */
+
+.map-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.floor-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.4rem 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.floor-tabs button {
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  white-space: nowrap;
+  margin-bottom: -1px;
+  background: var(--bg);
+  color: var(--muted);
+}
+
+.floor-tabs button.active {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  border-color: var(--border);
+  border-bottom: 1px solid var(--surface);
+}
+
+.floor-tabs .floor-count {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.map-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  user-select: none;
+}
+
+.map-canvas svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  outline: none;
+}
+
+.map-canvas svg.panning {
+  cursor: grabbing;
+}
+
+.map-grid-line {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.map-background {
+  cursor: grab;
+}
+
+.map-toolbar {
+  position: absolute;
+  top: 0.75rem;
+  display: flex;
+  gap: 0.3rem;
+}
+
+.map-toolbar-left {
+  left: 0.75rem;
+}
+
+.map-toolbar-right {
+  right: 0.75rem;
+}
+
+.map-hint {
+  position: absolute;
+  top: 3.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  pointer-events: none;
+  text-align: center;
+}
+
+.map-room-box {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 2;
+  cursor: move;
+}
+
+.map-room.selected .map-room-box {
+  stroke: var(--selected);
+  stroke-width: 3;
+}
+
+.map-room.role-start .map-room-box,
+.map-room.role-goal .map-room-box {
+  stroke: var(--accent);
+}
+
+.map-room.selected.role-start .map-room-box,
+.map-room.selected.role-goal .map-room-box {
+  stroke: var(--selected);
+}
+
+.map-room.invalid .map-room-box {
+  stroke: var(--danger);
+  stroke-dasharray: 6 4;
+  fill: color-mix(in srgb, var(--danger) 12%, var(--surface));
+}
+
+.map-room-body {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 0.3rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  color: var(--text);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.map-room-label {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.map-room-body .room-contents {
+  margin: 0;
+}
+
+.map-handle {
+  fill: var(--surface);
+  stroke: var(--selected);
+  stroke-width: 2;
+}
+
+.map-handle.handle-nw,
+.map-handle.handle-se {
+  cursor: nwse-resize;
+}
+
+.map-handle.handle-ne,
+.map-handle.handle-sw {
+  cursor: nesw-resize;
+}
+
+@media (max-width: 760px) {
+  .map-view {
+    flex: none;
+    height: 65vh;
+  }
 }

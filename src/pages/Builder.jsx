@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import GraphEditor from '../components/graph/GraphEditor.jsx'
+import MapEditor from '../components/map/MapEditor.jsx'
 import Playback from '../components/panels/Playback.jsx'
 import ResultsBanner from '../components/panels/ResultsBanner.jsx'
 import SidePanel from '../components/panels/SidePanel.jsx'
+import ThemeToggle from '../components/ThemeToggle.jsx'
 import { pathEdges, playbackMarks, roomMarks } from '../components/results.js'
 import { useDebounced } from '../components/useDebounced.js'
 import { EXAMPLES } from '../examples/index.js'
@@ -15,6 +17,8 @@ import { downloadText, exportFileName, exportJson } from '../storage/transfer.js
 import { replay, solve } from '../solver/index.js'
 
 const SAVE_DELAY = 400
+const VIEW_KEY = 'dungeon-delver:view'
+const VIEWS = { graph: 'Graph', map: 'Map' }
 const SAVE_STATUS = {
   saved: 'Saved in this browser',
   saving: 'Saving…',
@@ -93,6 +97,40 @@ function Missing({ title, children }) {
   )
 }
 
+/**
+ * Which editor is showing, 'graph' or 'map'. Both edit the same dungeon; the
+ * choice is only a preference, remembered in this browser.
+ */
+function useEditorView() {
+  const [view, setView] = useState(() => {
+    try {
+      return window.localStorage.getItem(VIEW_KEY) === 'map' ? 'map' : 'graph'
+    } catch {
+      return 'graph'
+    }
+  })
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(VIEW_KEY, view)
+    } catch {
+      // Storage can be off limits; the view just isn't remembered.
+    }
+  }, [view])
+  return [view, setView]
+}
+
+function ViewSwitch({ view, onChange }) {
+  return (
+    <div className="view-switch" role="group" aria-label="Editor view">
+      {Object.entries(VIEWS).map(([id, label]) => (
+        <button key={id} type="button" aria-pressed={view === id} className={view === id ? 'active' : undefined} onClick={() => onChange(id)}>
+          {label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 // The full link to `dungeon`, for pasting anywhere.
 const shareUrl = (dungeon) => `${window.location.origin}${window.location.pathname}${shareHref(encodeShare(dungeon))}`
 
@@ -165,6 +203,8 @@ function Editor({ id, initial, shared = false, example = false }) {
   // What's selected on the canvas: { kind: 'room' | 'edge', id } or null.
   const [selection, setSelection] = useState(null)
   const saveStatus = useAutosave(id, dungeon, shared ? 'shared' : example ? 'example' : 'off')
+  const [view, setView] = useEditorView()
+  const Canvas = view === 'map' ? MapEditor : GraphEditor
 
   function saveCopy() {
     const copyId = createSave(browserStorage(), dungeon)
@@ -204,6 +244,7 @@ function Editor({ id, initial, shared = false, example = false }) {
         <h1>{dungeon.name || 'Untitled Dungeon'}</h1>
         <span className={`save-status save-${saveStatus}`}>{SAVE_STATUS[saveStatus]}</span>
         <div className="header-actions">
+          <ViewSwitch view={view} onChange={setView} />
           {shared && (
             <button type="button" className="primary" onClick={saveCopy}>
               Save a copy
@@ -213,6 +254,7 @@ function Editor({ id, initial, shared = false, example = false }) {
           <button type="button" onClick={() => downloadText(exportFileName(dungeon), exportJson(dungeon))} title="Download this dungeon as a JSON file">
             Export JSON
           </button>
+          <ThemeToggle />
         </div>
       </header>
       <main className="workspace">
@@ -233,7 +275,7 @@ function Editor({ id, initial, shared = false, example = false }) {
               onClose={() => setPlayback(null)}
             />
           )}
-          <GraphEditor
+          <Canvas
             dungeon={dungeon}
             onChange={setDungeon}
             selection={selection}

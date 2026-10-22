@@ -42,6 +42,12 @@ describe('rooms', () => {
     expect(validateDungeon(dungeon).filter((p) => p.severity === 'warning')).toEqual([])
   })
 
+  it('adds a room on a given floor with a map rect', () => {
+    const { dungeon } = addRoom(emptyDungeon(), { floor: '1F', rect: { x: 1, y: 2, w: 4, h: 3 } })
+    expect(dungeon.rooms[0].rect).toEqual({ x: 1, y: 2, w: 4, h: 3 })
+    expect(validateDungeon(dungeon).filter((p) => p.severity === 'warning')).toEqual([])
+  })
+
   it('updates only the named room', () => {
     const d = updateRoom(sample(), 'b', { label: 'Big Chest' })
     expect(d.rooms.map((r) => r.label)).toEqual(['a', 'Big Chest', 'c'])

@@ -11,10 +11,11 @@ export function nextId(prefix, items) {
 }
 
 /**
- * Adds a room on the first floor, or on `floor` if given.
+ * Adds a room on the first floor, or on `floor` if given, at a graph position
+ * and map rect if given.
  * @returns {{ dungeon: import('./dungeon.js').Dungeon, id: string }}
  */
-export function addRoom(dungeon, { graphPos, floor } = {}) {
+export function addRoom(dungeon, { graphPos, rect, floor } = {}) {
   const id = nextId('r', dungeon.rooms)
   const room = {
     id,
@@ -23,6 +24,7 @@ export function addRoom(dungeon, { graphPos, floor } = {}) {
     contents: [],
   }
   if (graphPos) room.graphPos = { x: graphPos.x, y: graphPos.y }
+  if (rect) room.rect = { x: rect.x, y: rect.y, w: rect.w, h: rect.h }
   return { dungeon: { ...dungeon, rooms: [...dungeon.rooms, room] }, id }
 }
 

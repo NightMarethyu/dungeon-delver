@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import ThemeToggle from '../components/ThemeToggle.jsx'
 import { EXAMPLES } from '../examples/index.js'
 import { emptyDungeon } from '../model/dungeon.js'
 import { loadDungeon } from '../model/load.js'
@@ -105,7 +106,10 @@ export default function Landing() {
   return (
     <div className="landing">
       <header className="landing-hero">
-        <p className="eyebrow">Dungeon Delver</p>
+        <div className="landing-top">
+          <p className="eyebrow">Dungeon Delver</p>
+          <ThemeToggle />
+        </div>
         <h1>Check that your dungeon can be beaten, before anyone plays it.</h1>
         <p className="lede">
           Sketch how the rooms of a Zelda-style dungeon connect and what locks each door. Dungeon Delver tries every order of play and tells
