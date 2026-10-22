@@ -1070,6 +1070,174 @@ button.big {
   cursor: nesw-resize;
 }
 
+/* Connections on the map */
+
+.map-connection {
+  --gate-color: var(--gate-open);
+  cursor: pointer;
+}
+
+.map-connection.gate-smallKey {
+  --gate-color: var(--gate-smallKey);
+}
+
+.map-connection.gate-bigKey {
+  --gate-color: var(--gate-bigKey);
+}
+
+.map-connection.gate-item {
+  --gate-color: var(--gate-item);
+}
+
+.map-door {
+  fill: var(--gate-color);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+/* An open door is a gap in the wall. */
+.map-connection.gate-open .map-door {
+  fill: var(--surface);
+  stroke: var(--gate-color);
+}
+
+.map-connection.selected .map-door,
+.map-connection.selected .map-door-badge circle {
+  stroke: var(--selected);
+  stroke-width: 3;
+}
+
+.map-door-arrow {
+  fill: var(--gate-color);
+  stroke: var(--surface);
+  stroke-width: 1.5;
+}
+
+.map-door-badge circle {
+  fill: var(--surface);
+  stroke: var(--gate-color);
+  stroke-width: 2;
+}
+
+.map-door-badge text {
+  font-size: 10px;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.map-link {
+  stroke: var(--gate-color);
+  stroke-width: 2.5;
+  stroke-dasharray: 7 6;
+  pointer-events: none;
+}
+
+.map-connection.selected .map-link {
+  stroke: var(--selected);
+  stroke-width: 3.5;
+}
+
+.map-link-hit {
+  stroke: transparent;
+  stroke-width: 14;
+}
+
+.map-door-spot {
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.map-door-spot:hover,
+.map-door-spot.suggested {
+  opacity: 1;
+}
+
+.map-door-spot circle {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 3 2;
+}
+
+.map-door-spot.suggested circle {
+  fill: var(--accent);
+  stroke-dasharray: none;
+  animation: door-offer 1.4s ease-in-out infinite;
+}
+
+.map-door-spot path,
+.map-connect-knob path {
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  pointer-events: none;
+}
+
+.map-door-spot.suggested path {
+  stroke: var(--accent-text);
+}
+
+@keyframes door-offer {
+  50% {
+    stroke-width: 6;
+    stroke: color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-door-spot.suggested circle {
+    animation: none;
+  }
+}
+
+.map-connect-knob {
+  cursor: crosshair;
+}
+
+.map-connect-knob circle {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.map-connect-line {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-dasharray: 6 5;
+  pointer-events: none;
+}
+
+.map-notices {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: min(36rem, calc(100% - 1.5rem));
+}
+
+.map-notice {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+  font-size: 0.9rem;
+}
+
+.map-notice span {
+  flex: 1 1 14rem;
+}
+
 @media (max-width: 760px) {
   .map-view {
     flex: none;

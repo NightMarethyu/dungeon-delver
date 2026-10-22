@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { addRoom, removeRoom, updateRoom } from '../../model/edit.js'
+import { addEdge, addRoom, removeEdge, removeRoom, updateRoom } from '../../model/edit.js'
 import { belowAll, freePosition } from '../graph/layout.js'
-import { thingText } from '../labels.js'
-import { bounds, CELL, fits, freeSpot, moveRect, resizeRect, ROOM_SIZE, withMapLayout } from './grid.js'
+import { gateIcon, GATE_LABELS, KIND_LABELS, thingText } from '../labels.js'
+import { doorlessNeighbors, mapConnections } from './doors.js'
+import { bounds, CELL, fits, freeSpot, moveRect, resizeRect, ROOM_SIZE, sharedWall, spotBeside, withMapLayout } from './grid.js'
 
 const HANDLES = ['nw', 'ne', 'sw', 'se']
 const HANDLE_SIZE = 10
@@ -11,6 +12,10 @@ const MIN_ZOOM = 0.25
 const MAX_ZOOM = 3
 // Cells of empty space kept around the rooms when the view fits them.
 const FIT_MARGIN = 2
+
+// How a door is drawn: its length along the wall, and its thickness, in pixels.
+const DOOR = { length: CELL * 0.8, thickness: 10 }
+const BADGE_RADIUS = 9
 
 const clampZoom = (zoom) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom))
 const sameRect = (a, b) => a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h
@@ -72,10 +77,102 @@ function MapRoom({ room, rect, role, selected, invalid, onPointerDown }) {
   )
 }
 
+// Where a room's center is, in pixels.
+const centerOf = (rect) => ({ x: (rect.x + rect.w / 2) * CELL, y: (rect.y + rect.h / 2) * CELL })
+const inside = (rect, point) =>
+  point.x >= rect.x * CELL && point.x <= (rect.x + rect.w) * CELL && point.y >= rect.y * CELL && point.y <= (rect.y + rect.h) * CELL
+
+function edgeTitle(edge, names) {
+  const what = [edge.kind !== 'door' && KIND_LABELS[edge.kind], edge.gate.type !== 'open' && GATE_LABELS[edge.gate.type]].filter(Boolean)
+  const between = edge.oneWay ? `${names(edge.from)} → ${names(edge.to)}` : `${names(edge.from)} ↔ ${names(edge.to)}`
+  return [what.join(', ') || 'Door', between].join(': ')
+}
+
+// An arrow at `at` (pixels) pointing along `dir`, for one-way connections.
+function Arrow({ at, dir }) {
+  const angle = (Math.atan2(dir.y, dir.x) * 180) / Math.PI
+  return <path className="map-door-arrow" d="M -5 -6 L 6 0 L -5 6 Z" transform={`translate(${at.x} ${at.y}) rotate(${angle})`} />
+}
+
+function GateBadge({ at, gate }) {
+  const icon = gateIcon(gate)
+  if (!icon) return null
+  return (
+    <g className="map-door-badge" transform={`translate(${at.x} ${at.y})`}>
+      <circle r={BADGE_RADIUS} />
+      <text dy="0.35em">{icon}</text>
+    </g>
+  )
+}
+
+/**
+ * One connection on the map: a door on the wall two rooms share, or a dashed
+ * line between rooms that are connected but not yet side by side.
+ */
+function MapConnection({ connection, rects, selected, title, onPointerDown }) {
+  const { edge, door, line } = connection
+  const classes = ['map-connection', `gate-${edge.gate.type}`, `kind-${edge.kind}`, selected && 'selected', line && 'apart'].filter(Boolean).join(' ')
+  const to = centerOf(rects.get(edge.to))
+  if (door) {
+    const at = { x: door.x * CELL, y: door.y * CELL }
+    const w = door.vertical ? DOOR.thickness : DOOR.length
+    const h = door.vertical ? DOOR.length : DOOR.thickness
+    // Arrows point into the room the door leads to.
+    const dir = door.vertical ? { x: Math.sign(to.x - at.x), y: 0 } : { x: 0, y: Math.sign(to.y - at.y) }
+    return (
+      <g className={classes} onPointerDown={onPointerDown}>
+        <title>{title}</title>
+        <rect className="map-door" x={at.x - w / 2} y={at.y - h / 2} width={w} height={h} rx={3} />
+        {edge.oneWay && <Arrow at={{ x: at.x + dir.x * CELL * 0.45, y: at.y + dir.y * CELL * 0.45 }} dir={dir} />}
+        <GateBadge at={at} gate={edge.gate} />
+      </g>
+    )
+  }
+  const a = { x: line.x1 * CELL, y: line.y1 * CELL }
+  const b = { x: line.x2 * CELL, y: line.y2 * CELL }
+  const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+  return (
+    <g className={classes} onPointerDown={onPointerDown}>
+      <title>{`${title} (not side by side yet)`}</title>
+      <line className="map-link-hit" x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
+      <line className="map-link" x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
+      {edge.oneWay && <Arrow at={mid} dir={{ x: b.x - a.x, y: b.y - a.y }} />}
+      <GateBadge at={edge.oneWay ? { x: (mid.x + b.x) / 2, y: (mid.y + b.y) / 2 } : mid} gate={edge.gate} />
+    </g>
+  )
+}
+
+// A "+" on a shared wall with no door in it yet. Clicking it adds the door.
+function DoorSpot({ a, b, suggested, title, onAdd }) {
+  const wall = sharedWall(a, b)
+  if (!wall) return null
+  const at = { x: ((wall.x1 + wall.x2) / 2) * CELL, y: ((wall.y1 + wall.y2) / 2) * CELL }
+  return (
+    <g
+      className={`map-door-spot${suggested ? ' suggested' : ''}`}
+      transform={`translate(${at.x} ${at.y})`}
+      onPointerDown={(e) => {
+        e.stopPropagation()
+        onAdd()
+      }}
+    >
+      <title>{title}</title>
+      <circle r={BADGE_RADIUS} />
+      <path d="M -4.5 0 H 4.5 M 0 -4.5 V 4.5" />
+    </g>
+  )
+}
+
 /**
  * The map view: one floor at a time, rooms as rectangles on a snap grid.
  * Drag a room to move it, drag a corner of the selected room to resize it,
  * drag empty space to pan, and scroll to zoom.
+ *
+ * Only the dungeon's own connections are drawn. One between rooms on this
+ * floor is a door on the wall they share, or a dashed line until they're moved
+ * side by side. Drag the selected room's knob onto another room to connect
+ * them, or click a "+" on a shared wall. When an edit leaves a room sharing a
+ * wall with another it has no door to, the map offers to add one.
  *
  * Rooms with no rect are placed automatically (grid.js). The placement is only
  * shown until something on the map changes; then it's saved with that change,
@@ -100,6 +197,9 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
   const floor = tabs.some((f) => f.id === floorChoice) ? floorChoice : tabs[0]?.id
 
   const rooms = laidOut.rooms.filter((r) => r.floor === floor)
+  const rects = new Map(rooms.map((r) => [r.id, r.rect]))
+  const names = (id) => dungeon.rooms.find((r) => r.id === id)?.label ?? id
+  const selectedEdge = selection?.kind === 'edge' ? dungeon.edges.find((e) => e.id === selection.id) : null
   // An edit made on the map saves the automatic placement along with it.
   const edit = useCallback((change) => onChange((d) => change(withMapLayout(d))), [onChange])
 
@@ -155,8 +255,42 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
   // The rects of this floor's rooms, other than room `id`.
   const others = (id) => rooms.filter((r) => r.id !== id).map((r) => r.rect)
 
-  // The drag in progress: moving or resizing a room (with its rect so far), or panning.
+  // The drag in progress: moving or resizing a room (with its rect so far),
+  // connecting it to another (with the pointer so far), or panning.
   const [drag, setDrag] = useState(null)
+
+  // Doors the map is offering to add, after an edit left room `id` sharing a
+  // wall with `others` and no door between them: { id, others } or null.
+  const [offer, setOffer] = useState(null)
+  // Offer only doors that still make sense, after whatever has changed since.
+  const offered = offer && rects.has(offer.id) ? offer.others.filter((o) => doorlessNeighbors(rooms, dungeon.edges, offer.id).includes(o)) : []
+
+  // After room `id` gets `rect`, offer doors to the rooms it newly shares a wall with.
+  function offerDoors(id, nextRooms) {
+    const before = new Set(doorlessNeighbors(rooms, dungeon.edges, id))
+    const others = doorlessNeighbors(nextRooms, dungeon.edges, id).filter((o) => !before.has(o))
+    setOffer(others.length > 0 ? { id, others } : null)
+  }
+
+  function connect(a, b) {
+    const { dungeon: next, id } = addEdge(withMapLayout(dungeon), a, b)
+    if (!id) return
+    onChange(() => next)
+    onSelect({ kind: 'edge', id })
+  }
+
+  function startConnect(event, room) {
+    if (event.button !== 0) return
+    event.stopPropagation()
+    setDrag({ mode: 'connect', id: room.id, point: toCanvas(event) })
+  }
+
+  function selectEdge(event, edge) {
+    if (event.button !== 0) return
+    event.stopPropagation()
+    svg.current.focus({ preventScroll: true })
+    onSelect({ kind: 'edge', id: edge.id })
+  }
 
   function startRoomDrag(event, room, mode) {
     if (event.button !== 0) return
@@ -181,6 +315,10 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
       return
     }
     const point = toCanvas(event)
+    if (drag.mode === 'connect') {
+      setDrag({ ...drag, point })
+      return
+    }
     const dx = Math.round((point.x - drag.origin.x) / CELL)
     const dy = Math.round((point.y - drag.origin.y) / CELL)
     const draft = drag.mode === 'move' ? moveRect(drag.rect, dx, dy) : resizeRect(drag.rect, drag.mode, dx, dy)
@@ -194,9 +332,15 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
       if (!drag.moved) onSelect(null)
       return
     }
+    if (drag.mode === 'connect') {
+      const target = rooms.find((r) => r.id !== drag.id && inside(r.rect, drag.point))
+      if (target) connect(drag.id, target.id)
+      return
+    }
     // A room can't be dropped on top of another; it goes back where it was.
     if (!sameRect(drag.draft, drag.rect) && fits(drag.draft, others(drag.id))) {
       edit((d) => updateRoom(d, drag.id, { rect: drag.draft }))
+      offerDoors(drag.id, rooms.map((r) => (r.id === drag.id ? { ...r, rect: drag.draft } : r)))
     }
   }
 
@@ -214,30 +358,70 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
     }
   })
 
-  function addRoomAt(point) {
-    const want = { x: Math.round(point.x / CELL - ROOM_SIZE.w / 2), y: Math.round(point.y / CELL - ROOM_SIZE.h / 2) }
-    const rect = { ...freeSpot(want, ROOM_SIZE, others(null), 0), ...ROOM_SIZE }
+  function addRoomWithRect(rect) {
     // Give it a spot in the graph too, so it doesn't land on another room there.
     const graphPos = freePosition(belowAll(dungeon.rooms), dungeon.rooms)
     const { dungeon: next, id } = addRoom(laidOut, { floor, rect, graphPos })
     onChange(() => next)
     onSelect({ kind: 'room', id })
+    offerDoors(id, next.rooms.filter((r) => r.floor === floor))
   }
 
+  function addRoomAt(point) {
+    const want = { x: Math.round(point.x / CELL - ROOM_SIZE.w / 2), y: Math.round(point.y / CELL - ROOM_SIZE.h / 2) }
+    addRoomWithRect({ ...freeSpot(want, ROOM_SIZE, others(null), 0), ...ROOM_SIZE })
+  }
+
+  // A new room goes beside the selected room, if there's one on this floor,
+  // and otherwise in the middle of the view.
   function addRoomInView() {
-    addRoomAt({ x: view.x + size.w / view.zoom / 2, y: view.y + size.h / view.zoom / 2 })
+    const beside = rects.get(selectedRoom?.id)
+    const spot = beside && spotBeside(ROOM_SIZE, [beside], [], others(null))
+    if (spot) addRoomWithRect({ ...spot, ...ROOM_SIZE })
+    else addRoomAt({ x: view.x + size.w / view.zoom / 2, y: view.y + size.h / view.zoom / 2 })
   }
 
   function onKeyDown(event) {
-    if (!selectedRoom) return
+    if (!selectedRoom && !selectedEdge) return
     if (event.key === 'Delete' || event.key === 'Backspace') {
       event.preventDefault()
-      onChange((d) => removeRoom(d, selectedRoom.id))
+      onChange((d) => (selectedRoom ? removeRoom(d, selectedRoom.id) : removeEdge(d, selectedEdge.id)))
       onSelect(null)
     } else if (event.key === 'Escape') {
       onSelect(null)
     }
   }
+
+  const connections = mapConnections(rooms, dungeon.edges)
+  // While a room is dragged, its doors go with it.
+  const shown = drag?.draft ? rooms.map((r) => (r.id === drag.id ? { ...r, rect: drag.draft } : r)) : rooms
+  const shownConnections = shown === rooms ? connections : mapConnections(shown, dungeon.edges)
+  const shownRects = new Map(shown.map((r) => [r.id, r.rect]))
+
+  // When the selected connection is a dashed line, the room to move so the
+  // two sit side by side: whichever has fewer other doors on this floor to
+  // keep, and the spot beside the other room that keeps the most of them.
+  const apart = connections.find((c) => c.line && c.edge.id === selectedEdge?.id)
+  function sideBySide() {
+    const doorCount = (id) => connections.filter((c) => c.door && (c.edge.from === id || c.edge.to === id)).length
+    const [mover, anchor] = doorCount(apart.edge.from) < doorCount(apart.edge.to) ? [apart.edge.from, apart.edge.to] : [apart.edge.to, apart.edge.from]
+    const rect = rects.get(mover)
+    const connected = connections
+      .filter((c) => c.edge.from === mover || c.edge.to === mover)
+      .map((c) => rects.get(c.edge.from === mover ? c.edge.to : c.edge.from))
+    const taken = rooms.filter((r) => r.id !== mover).map((r) => r.rect)
+    const spot = spotBeside({ w: rect.w, h: rect.h }, [rects.get(anchor)], connected, taken)
+    return spot && { mover, anchor, rect: { ...rect, ...spot } }
+  }
+  const fix = apart ? sideBySide() : null
+
+  // The "+" spots to show: on the selected room's doorless shared walls, and
+  // on the walls the map is offering doors in.
+  const spots = []
+  if (selectedRoom && rects.has(selectedRoom.id)) {
+    for (const o of doorlessNeighbors(rooms, dungeon.edges, selectedRoom.id)) spots.push([selectedRoom.id, o])
+  }
+  for (const o of offered) if (!spots.some(([a, b]) => a === offer.id && b === o)) spots.push([offer.id, o])
 
   const center = () => ({ x: size.w / 2, y: size.h / 2 })
 
@@ -287,7 +471,7 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
                 onDoubleClick={(e) => addRoomAt(toCanvas(e))}
               />
               {rooms.map((room) => {
-                const dragging = drag?.id === room.id
+                const dragging = drag?.id === room.id && drag.mode !== 'connect'
                 const rect = dragging ? drag.draft : room.rect
                 return (
                   <MapRoom
@@ -301,6 +485,47 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
                   />
                 )
               })}
+              {shownConnections.map((c) => (
+                  <MapConnection
+                    key={c.edge.id}
+                    connection={c}
+                    rects={shownRects}
+                    selected={selectedEdge?.id === c.edge.id}
+                    title={edgeTitle(c.edge, names)}
+                    onPointerDown={(e) => selectEdge(e, c.edge)}
+                  />
+                ))}
+              {!drag &&
+                spots.map(([a, b]) => (
+                  <DoorSpot
+                    key={`${a}-${b}`}
+                    a={rects.get(a)}
+                    b={rects.get(b)}
+                    suggested={offered.includes(b) && offer.id === a}
+                    title={`Add a door between ${names(a)} and ${names(b)}`}
+                    onAdd={() => connect(a, b)}
+                  />
+                ))}
+              {selectedRoom && rects.has(selectedRoom.id) && !drag && (
+                <g
+                  className="map-connect-knob"
+                  transform={`translate(${(rects.get(selectedRoom.id).x + rects.get(selectedRoom.id).w) * CELL - 15} ${rects.get(selectedRoom.id).y * CELL + 15})`}
+                  onPointerDown={(e) => startConnect(e, selectedRoom)}
+                >
+                  <title>Drag onto another room to connect them</title>
+                  <circle r={8} />
+                  <path d="M -3.5 0 H 3.5 M 1 -3 L 4 0 L 1 3" />
+                </g>
+              )}
+              {drag?.mode === 'connect' && (
+                <line
+                  className="map-connect-line"
+                  x1={centerOf(rects.get(drag.id)).x}
+                  y1={centerOf(rects.get(drag.id)).y}
+                  x2={drag.point.x}
+                  y2={drag.point.y}
+                />
+              )}
             </>
           )}
         </svg>
@@ -325,6 +550,36 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect }) {
             Fit
           </button>
         </div>
+        {(offered.length > 0 || apart) && (
+          <div className="map-notices">
+            {offered.map((o) => (
+              <p key={o} className="map-notice">
+                <span>
+                  <strong>{names(offer.id)}</strong> now shares a wall with <strong>{names(o)}</strong>. Add a door between them?
+                </span>
+                <button type="button" className="primary" onClick={() => connect(offer.id, o)}>
+                  Add door
+                </button>
+                <button type="button" onClick={() => setOffer({ ...offer, others: offer.others.filter((x) => x !== o) })}>
+                  No door
+                </button>
+              </p>
+            ))}
+            {apart && (
+              <p className="map-notice">
+                <span>
+                  <strong>{names(apart.edge.from)}</strong> and <strong>{names(apart.edge.to)}</strong> are connected, but don&apos;t share a wall
+                  for the door yet.
+                </span>
+                {fix && (
+                  <button type="button" className="primary" onClick={() => edit((d) => updateRoom(d, fix.mover, { rect: fix.rect }))}>
+                    Move {names(fix.mover)} next to {names(fix.anchor)}
+                  </button>
+                )}
+              </p>
+            )}
+          </div>
+        )}
         {view && rooms.length === 0 && (
           <p className="canvas-hint map-hint">
             {dungeon.rooms.length === 0 ? 'Add a room, or double-click the grid, to start your dungeon.' : 'No rooms on this floor yet. Double-click the grid to add one.'}

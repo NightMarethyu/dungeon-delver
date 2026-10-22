@@ -56,27 +56,130 @@ function preferredSpot(room, index) {
 }
 
 /**
+ * The stretch of wall that rects `a` and `b` share, or null when they don't
+ * share at least one cell of wall. Rects that only meet at a corner don't.
+ * @returns {{ x1: number, y1: number, x2: number, y2: number, side: 'left' | 'right' | 'top' | 'bottom' } | null}
+ *   in cells; `side` is the side of `a` the wall is on.
+ */
+export function sharedWall(a, b) {
+  const vertical = (x, side) => {
+    const y1 = Math.max(a.y, b.y)
+    const y2 = Math.min(a.y + a.h, b.y + b.h)
+    return y2 - y1 >= 1 ? { x1: x, y1, x2: x, y2, side } : null
+  }
+  const horizontal = (y, side) => {
+    const x1 = Math.max(a.x, b.x)
+    const x2 = Math.min(a.x + a.w, b.x + b.w)
+    return x2 - x1 >= 1 ? { x1, y1: y, x2, y2: y, side } : null
+  }
+  if (a.x + a.w === b.x) return vertical(b.x, 'right')
+  if (b.x + b.w === a.x) return vertical(a.x, 'left')
+  if (a.y + a.h === b.y) return horizontal(b.y, 'bottom')
+  if (b.y + b.h === a.y) return horizontal(a.y, 'top')
+  return null
+}
+
+export const touches = (a, b) => sharedWall(a, b) !== null
+
+/**
+ * Where to put a room of `size` so it shares a wall with as many of
+ * `connected` as it can, starting from a wall of one of `anchors`. It never
+ * overlaps anything in `taken`, tries not to touch the rest of `taken` (no
+ * room wants a wall it has no door in), and among equal spots takes the one
+ * closest to `want` (a point in cells), if given.
+ * @returns {{ x: number, y: number } | null} its top-left corner, or null when
+ *   no wall of any anchor has room
+ */
+export function spotBeside(size, anchors, connected, taken, want = null) {
+  let best = null
+  let bestScore = -Infinity
+  const consider = (x, y, anchor) => {
+    const rect = { x, y, ...size }
+    if (!fits(rect, taken)) return
+    const doors = connected.filter((c) => touches(rect, c)).length
+    const strangers = taken.filter((t) => !connected.includes(t) && touches(rect, t)).length
+    const cx = x + size.w / 2
+    const cy = y + size.h / 2
+    const target = want ?? { x: anchor.x + anchor.w / 2, y: anchor.y + anchor.h / 2 }
+    // Doors matter most, then avoiding strangers, then being close to where
+    // the room is wanted, then lining up with the anchor.
+    const offset = Math.abs(cx - (anchor.x + anchor.w / 2)) + Math.abs(cy - (anchor.y + anchor.h / 2))
+    const score = doors * 1000 - strangers * 100 - Math.hypot(cx - target.x, cy - target.y) - offset / 100
+    if (score > bestScore) {
+      bestScore = score
+      best = { x, y }
+    }
+  }
+  for (const a of anchors) {
+    for (let y = a.y - size.h + 1; y <= a.y + a.h - 1; y++) {
+      consider(a.x + a.w, y, a)
+      consider(a.x - size.w, y, a)
+    }
+    for (let x = a.x - size.w + 1; x <= a.x + a.w - 1; x++) {
+      consider(x, a.y + a.h, a)
+      consider(x, a.y - size.h, a)
+    }
+  }
+  return best
+}
+
+// Where room `room` would like its center, going by where it sits in the graph
+// compared to `anchor`, a room already on the map.
+function wantedCenter(room, anchor) {
+  if (!room.graphPos || !anchor.graphPos) return null
+  return {
+    x: anchor.rect.x + anchor.rect.w / 2 + ((room.graphPos.x - anchor.graphPos.x) / GRAPH_STEP.x) * MAP_STEP.x,
+    y: anchor.rect.y + anchor.rect.h / 2 + ((room.graphPos.y - anchor.graphPos.y) / GRAPH_STEP.y) * MAP_STEP.y,
+  }
+}
+
+// Rects for the rooms of one floor that have none. Rooms connected to a room
+// already placed go beside it, so their door has a wall; the rest start a new
+// cluster near where they sit in the graph.
+function layoutFloor(rooms, edges) {
+  const placed = new Map(rooms.filter((r) => isValidRect(r.rect)).map((r) => [r.id, r]))
+  const neighbors = new Map(rooms.map((r) => [r.id, new Set()]))
+  for (const e of edges) {
+    if (e.from !== e.to && neighbors.has(e.from) && neighbors.has(e.to)) {
+      neighbors.get(e.from).add(e.to)
+      neighbors.get(e.to).add(e.from)
+    }
+  }
+  const placedNeighbors = (room) => [...neighbors.get(room.id)].filter((id) => placed.has(id)).map((id) => placed.get(id))
+  let pending = rooms.filter((r) => !placed.has(r.id))
+  while (pending.length > 0) {
+    const room = pending.find((r) => placedNeighbors(r).length > 0) ?? pending[0]
+    pending = pending.filter((r) => r !== room)
+    const taken = [...placed.values()].map((r) => r.rect)
+    const near = placedNeighbors(room)
+    let spot = null
+    if (near.length > 0) {
+      const rects = near.map((r) => r.rect)
+      spot = spotBeside(ROOM_SIZE, rects, rects, taken, wantedCenter(room, near[0]))
+    }
+    spot ??= freeSpot(preferredSpot(room, rooms.indexOf(room)), ROOM_SIZE, taken)
+    placed.set(room.id, { ...room, rect: { ...spot, ...ROOM_SIZE } })
+  }
+  return placed
+}
+
+/**
  * Gives every room without a usable rect one, on its own floor, clear of the
- * rooms already placed there. Returns the dungeon unchanged when nothing is
- * missing. Rooms that already have a rect never move.
+ * rooms already placed there and beside the rooms it connects to where it can
+ * be. Returns the dungeon unchanged when nothing is missing. Rooms that already
+ * have a rect never move.
  */
 export function withMapLayout(dungeon) {
   if (dungeon.rooms.every((r) => isValidRect(r.rect))) return dungeon
-  const taken = new Map()
-  for (const room of dungeon.rooms) {
-    if (!taken.has(room.floor)) taken.set(room.floor, [])
-    if (isValidRect(room.rect)) taken.get(room.floor).push(room.rect)
+  const laid = new Map()
+  const floors = new Set(dungeon.rooms.map((r) => r.floor))
+  for (const floor of floors) {
+    const onFloor = dungeon.rooms.filter((r) => r.floor === floor)
+    if (onFloor.some((r) => !isValidRect(r.rect))) {
+      for (const [id, room] of layoutFloor(onFloor, dungeon.edges)) laid.set(id, room)
+    }
   }
-  const seen = new Map()
-  const rooms = dungeon.rooms.map((room) => {
-    const index = seen.get(room.floor) ?? 0
-    seen.set(room.floor, index + 1)
-    if (isValidRect(room.rect)) return room
-    const onFloor = taken.get(room.floor)
-    const rect = { ...freeSpot(preferredSpot(room, index), ROOM_SIZE, onFloor), ...ROOM_SIZE }
-    onFloor.push(rect)
-    return { ...room, rect }
-  })
+  const rooms = dungeon.rooms.map((room) => (isValidRect(room.rect) ? room : laid.get(room.id)))
   return { ...dungeon, rooms }
 }
 

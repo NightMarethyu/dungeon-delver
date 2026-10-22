@@ -259,7 +259,7 @@ function FloorList({ dungeon, onChange }) {
   )
 }
 
-function DungeonPanel({ dungeon, onChange }) {
+function DungeonPanel({ dungeon, onChange, view }) {
   return (
     <>
       <h2>Dungeon</h2>
@@ -270,20 +270,31 @@ function DungeonPanel({ dungeon, onChange }) {
       <RoomSelect label="▶ Start room" value={dungeon.start} rooms={dungeon.rooms} onChange={(id) => onChange((d) => setEndpoint(d, 'start', id))} />
       <RoomSelect label="★ Goal room" value={dungeon.goal} rooms={dungeon.rooms} onChange={(id) => onChange((d) => setEndpoint(d, 'goal', id))} />
       <FloorList dungeon={dungeon} onChange={onChange} />
-      <Help />
+      <Help view={view} />
     </>
   )
 }
 
-function Help() {
+function Help({ view }) {
   return (
     <details className="help-box" open>
       <summary>How to build a dungeon</summary>
       <ul className="help">
-        <li><strong>Add a room</strong> with the button, or double-click empty space.</li>
-        <li><strong>Connect rooms</strong> by dragging from the dot on a room&apos;s edge to another room.</li>
-        <li><strong>Select</strong> a room or connection to edit it here. Click empty space to come back.</li>
-        <li><strong>Rename</strong> a room by double-clicking its name.</li>
+        {view === 'map' ? (
+          <>
+            <li><strong>Add a room</strong> with the button, or double-click the grid. With a room selected, the button adds one beside it.</li>
+            <li><strong>Move</strong> a room by dragging it, and <strong>resize</strong> the selected room from its corners.</li>
+            <li><strong>Add a door</strong> by clicking a <strong>+</strong> on a wall two rooms share, or by dragging the arrow in the selected room&apos;s corner onto another room.</li>
+            <li><strong>Select</strong> a room or door to edit it here, and rename it. Click empty space to come back.</li>
+          </>
+        ) : (
+          <>
+            <li><strong>Add a room</strong> with the button, or double-click empty space.</li>
+            <li><strong>Connect rooms</strong> by dragging from the dot on a room&apos;s edge to another room.</li>
+            <li><strong>Select</strong> a room or connection to edit it here. Click empty space to come back.</li>
+            <li><strong>Rename</strong> a room by double-clicking its name.</li>
+          </>
+        )}
         <li><strong>Delete</strong> the selected room or connection with Delete or Backspace.</li>
         <li><strong>Set a start and goal</strong> and the check above the canvas updates as you edit.</li>
       </ul>
@@ -298,16 +309,17 @@ function Help() {
  *   selection: { kind: 'room' | 'edge', id: string } | null,
  *   onChange: Function,
  *   onSelect: Function,
+ *   view: 'map' | 'graph',
  * }} props
  */
-export default function SidePanel({ dungeon, selection, onChange, onSelect }) {
+export default function SidePanel({ dungeon, selection, onChange, onSelect, view }) {
   const room = selection?.kind === 'room' && dungeon.rooms.find((r) => r.id === selection.id)
   const edge = selection?.kind === 'edge' && dungeon.edges.find((e) => e.id === selection.id)
   const props = { dungeon, onChange, onSelect }
 
   return (
     <aside className="side-panel">
-      {room ? <RoomPanel key={room.id} room={room} {...props} /> : edge ? <EdgePanel key={edge.id} edge={edge} {...props} /> : <DungeonPanel dungeon={dungeon} onChange={onChange} />}
+      {room ? <RoomPanel key={room.id} room={room} {...props} /> : edge ? <EdgePanel key={edge.id} edge={edge} {...props} /> : <DungeonPanel dungeon={dungeon} onChange={onChange} view={view} />}
       <datalist id={ITEM_LIST_ID}>
         {itemNames(dungeon).map((n) => (
           <option key={n} value={n} />
