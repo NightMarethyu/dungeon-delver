@@ -79,3 +79,31 @@ export function describeChoice(dungeon, choice) {
   }
   return `Take the one-way ${KIND_LABELS[edge.kind]?.toLowerCase() ?? 'connection'} from ${from} to ${to}`
 }
+
+/**
+ * Highlights for one step of softlock playback, from replay(): the rooms the
+ * player can walk (marked 'stuck' on the last step), every other room faded,
+ * the doors opened so far, and the connection this step's choice used.
+ * @param {import('../model/dungeon.js').Dungeon} dungeon
+ * @param {ReturnType<typeof import('../solver/replay.js').replay>} steps
+ * @param {number} at the step shown
+ * @returns {{ rooms: Map<string, 'here' | 'stuck' | 'out'>, edges: Map<string, 'pb-opened' | 'pb-current'> }}
+ */
+export function playbackMarks(dungeon, steps, at) {
+  const step = steps[at]
+  const region = new Set(step.region)
+  const here = at === steps.length - 1 ? 'stuck' : 'here'
+  const rooms = new Map(dungeon.rooms.map((r) => [r.id, region.has(r.id) ? here : 'out']))
+  const edges = new Map(step.opened.map((id) => [id, 'pb-opened']))
+  if (step.choice) edges.set(step.choice.edge, 'pb-current')
+  return { rooms, edges }
+}
+
+/** What the player holds at a playback step, in words, like "1 small key, big key, hookshot". */
+export function holdingText(step) {
+  const parts = []
+  if (step.keys > 0) parts.push(`${step.keys} small ${step.keys === 1 ? 'key' : 'keys'}`)
+  if (step.bigKey) parts.push('big key')
+  parts.push(...step.items.map((name) => name || 'unnamed item'))
+  return parts.length > 0 ? parts.join(', ') : 'nothing'
+}

@@ -2,8 +2,9 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { emptyDungeon } from '../model/dungeon.js'
 import { loadDungeon } from '../model/load.js'
+import { replay } from '../solver/replay.js'
 import { solve } from '../solver/solve.js'
-import { describeChoice, pathEdges, roomMarks, summarize } from './results.js'
+import { describeChoice, holdingText, pathEdges, playbackMarks, roomMarks, summarize } from './results.js'
 
 const fixture = (name) =>
   loadDungeon(readFileSync(new URL(`../solver/__fixtures__/${name}.json`, import.meta.url), 'utf8')).dungeon
@@ -73,5 +74,32 @@ describe('describeChoice', () => {
     expect(describeChoice(d, { type: 'openDoor', edge: 'toDead' })).toBe('Open the small key door between Entrance and Dead End')
     const trap = fixture('one-way-trap')
     expect(describeChoice(trap, { type: 'oneWay', edge: 'drop' })).toBe('Take the one-way drop from Hub to Pit')
+  })
+})
+
+describe('playbackMarks', () => {
+  const dungeon = fixture('key-softlock')
+  const steps = replay(dungeon, solve(dungeon).softlocks[0].choices)
+
+  it('shows where the player starts, with the rest faded', () => {
+    const { rooms, edges } = playbackMarks(dungeon, steps, 0)
+    expect(Object.fromEntries(rooms)).toEqual({ start: 'here', dead: 'out', keyRoom: 'out', goal: 'out' })
+    expect(edges.size).toBe(0)
+  })
+
+  it('marks the stuck rooms and the door just opened on the last step', () => {
+    const { rooms, edges } = playbackMarks(dungeon, steps, 1)
+    expect(Object.fromEntries(rooms)).toEqual({ start: 'stuck', dead: 'stuck', keyRoom: 'out', goal: 'out' })
+    expect(Object.fromEntries(edges)).toEqual({ toDead: 'pb-current' })
+  })
+})
+
+describe('holdingText', () => {
+  it.each([
+    [{ keys: 0, bigKey: false, items: [] }, 'nothing'],
+    [{ keys: 1, bigKey: false, items: [] }, '1 small key'],
+    [{ keys: 2, bigKey: true, items: ['hookshot', ''] }, '2 small keys, big key, hookshot, unnamed item'],
+  ])('describes %j', (step, text) => {
+    expect(holdingText(step)).toBe(text)
   })
 })

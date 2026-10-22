@@ -22,7 +22,7 @@ function Legend({ result }) {
   )
 }
 
-function Softlocks({ dungeon, softlocks }) {
+function Softlocks({ dungeon, softlocks, playing, onPlay }) {
   if (softlocks.length === 0) return null
   return (
     <details className="banner-details">
@@ -32,7 +32,10 @@ function Softlocks({ dungeon, softlocks }) {
           // Only the last choice is the mistake; the ones before it set it up.
           const steps = softlock.choices.map((c, j) => (j === 0 ? describeChoice(dungeon, c) : lowerFirst(describeChoice(dungeon, c))))
           return (
-            <li key={i}>
+            <li key={i} className={playing === i ? 'playing' : undefined}>
+              <button type="button" className="play" onClick={() => onPlay(i)} aria-label={`Play softlock ${i + 1}`} title="Step through it on the canvas">
+                ▶ Play
+              </button>{' '}
               {steps.length > 1 && <span className="muted">{steps.slice(0, -1).join(', then ')}, then </span>}
               <strong>{steps.at(-1)}</strong>
             </li>
@@ -62,9 +65,15 @@ function Warnings({ warnings }) {
 
 /**
  * The solver's verdict on the dungeon, above the canvas.
- * @param {{ dungeon: import('../../model/dungeon.js').Dungeon, result: ReturnType<typeof import('../../solver/solve.js').solve> }} props
+ * `playing` is the index of the softlock being played back, if any.
+ * @param {{
+ *   dungeon: import('../../model/dungeon.js').Dungeon,
+ *   result: ReturnType<typeof import('../../solver/solve.js').solve>,
+ *   playing: number | null,
+ *   onPlay: (index: number) => void,
+ * }} props
  */
-export default function ResultsBanner({ dungeon, result }) {
+export default function ResultsBanner({ dungeon, result, playing, onPlay }) {
   const { tone, title, detail } = summarize(result)
   return (
     <section className={`results-banner tone-${tone}`} aria-live="polite">
@@ -73,9 +82,9 @@ export default function ResultsBanner({ dungeon, result }) {
         <div className="banner-text">
           <strong>{title}</strong> <span className="muted">{detail}</span>
         </div>
-        <Legend result={result} />
+        {playing === null && <Legend result={result} />}
       </div>
-      <Softlocks dungeon={dungeon} softlocks={result.softlocks} />
+      <Softlocks dungeon={dungeon} softlocks={result.softlocks} playing={playing} onPlay={onPlay} />
       <Warnings warnings={result.warnings} />
     </section>
   )
