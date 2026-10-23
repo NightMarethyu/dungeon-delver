@@ -2,7 +2,7 @@
 
 All notable changes to Dungeon Delver. Versions match the git tags.
 
-## Unreleased
+## 1.1 (2026-10-23)
 
 Quality of life: undo, keyboard shortcuts, and a layout for phones.
 
