@@ -1,12 +1,21 @@
 # Dungeon Delver
 
-Exploring custom Zelda dungeons and whether they would work.
+**[Open Dungeon Delver](https://nightmarethyu.github.io/dungeon-delver/)** · [Changelog](CHANGELOG.md) · [More of my projects](https://nightmarethyu.github.io/)
 
-Sketch how a dungeon's rooms connect and what locks each connection (small keys, the big key, items like the hookshot, puzzles, one-way drops). Dungeon Delver tells you whether the dungeon can be beaten, how a player could softlock, which rooms are optional, and what the critical path is.
+Find out whether a Zelda-style dungeon can be beaten before anyone plays it.
 
-It's a static site, hosted on GitHub Pages, with no accounts and no server. Version 1.0 lays dungeons out as a map, floor by floor, with the solver's results on it. The plan from here is to grow it into a dungeon building tool for tabletop RPGs (see [Roadmap](#roadmap) and the [changelog](CHANGELOG.md)).
+Sketch how a dungeon's rooms connect and what locks each connection: small keys, the big key, items like the hookshot, puzzles, and one-way drops. Dungeon Delver tells you whether the dungeon can be beaten, every way a player could softlock it, which rooms are optional, and what the critical path is. The results update as you edit, right on the map.
+
+It's a static site on GitHub Pages, with no accounts and no server: dungeons are saved in your browser and shared as links. Version 1.1 adds undo, keyboard shortcuts, and a layout for phones. From here the plan is to grow it into a dungeon building tool for tabletop RPGs (see the [roadmap](#roadmap)).
 
 ![The landing page, with saved dungeons and examples](docs/screenshots/landing-page.png)
+
+## Try it
+
+1. Open [the site](https://nightmarethyu.github.io/dungeon-delver/) and pick one of the three examples. The **Sunken Cistern** is a good start: it can be beaten, but two choices leave the player stuck.
+2. Open "How the player gets stuck" in the banner and step through a softlock to see where it goes wrong.
+3. Change something, like moving a key or locking a different door, and watch the results change. Press **?** for the keyboard shortcuts.
+4. When you're ready, start a new dungeon from the front page. It saves itself as you go.
 
 ## Features
 
@@ -23,15 +32,22 @@ It's a static site, hosted on GitHub Pages, with no accounts and no server. Vers
 - **JSON export and import**, for backups and for moving dungeons between browsers.
 - **Three example dungeons** to try: a gentle first one, a key softlock, and a one-way drop trap. An example joins your dungeons only once you change it.
 
+## Screenshots
+
 ![The map view of the Sunken Cistern's lower floor in the dark theme, with the critical path highlighted and lock icons on the doors](docs/screenshots/map-view.png)
 
 ![Playing back a softlock on the map: the wasted key leaves the player stuck on both floors](docs/screenshots/softlock-playback.png)
 
 ![Live results on the graph view of the Sunken Cistern](docs/screenshots/live-results.png)
 
+![The keyboard shortcuts dialog, in the light theme](docs/screenshots/shortcuts-dialog.png)
+
 ![A dungeon opened from a share link](docs/screenshots/shared-link.png)
 
-<img src="docs/screenshots/phone-playback.png" alt="Softlock playback on a phone, in the dark theme" width="300">
+<p>
+  <img src="docs/screenshots/phone-map.png" alt="The map of the Sunken Cistern's ground floor on a phone, with the settings sheet folded at the bottom" width="300">
+  <img src="docs/screenshots/phone-playback.png" alt="Softlock playback on a phone, in the dark theme" width="300">
+</p>
 
 ## How the solver works
 
@@ -52,9 +68,9 @@ The solver is tested against small hand-made dungeons in `src/solver/__fixtures_
 - Phase 0 and 1: the dungeon format and the solver, tested against hand-made fixture dungeons.
 - Phase 2 (v0.1): the graph editor, live results, softlock playback, saves, share links, JSON export, and examples.
 - Phase 3 (1.0): the map view, doors in shared walls, clickable stairs and holes between floors, the drawn icons, puzzle locks, and solver highlights and softlock playback on the map. The light and dark themes from Phase 4 are done too.
-- Phase 4 (1.1, unreleased): undo and redo, keyboard shortcuts, and a phone layout with touch editing.
+- Phase 4 (1.1): undo and redo, keyboard shortcuts, and a phone layout with touch editing.
 
-**After 1.0: a dungeon builder for tabletop RPGs**
+**Next: a dungeon builder for tabletop RPGs**
 
 The solver stays the core, but the tool grows from checking Zelda-style dungeons into building dungeons to run at the table. Planned, roughly in order:
 
@@ -77,7 +93,9 @@ npm run lint    # oxlint
 npm run build   # production build in dist/
 ```
 
-Pushes to `main` run lint, tests, and the build, then deploy to GitHub Pages.
+Pushes to `main` run lint, tests, and the build, then deploy to GitHub Pages. Releases are tagged by hand (`v0.1`, `v1.0`, ...), and the version in `package.json` is the one shown at the bottom of the front page.
+
+It's built with React 19 and Vite. The graph editor uses [React Flow](https://reactflow.dev/), the map is plain SVG, and share links are compressed with [lz-string](https://github.com/pieroxy/lz-string).
 
 ## Project layout
 
@@ -98,10 +116,14 @@ Pushes to `main` run lint, tests, and the build, then deploy to GitHub Pages.
 | `src/examples/` | The example dungeons on the front page, with tests that they show what their blurbs promise |
 | `docs/screenshots/` | Screenshots for this README |
 
+## Author
+
+Made by Ammon Turner ([@NightMarethyu](https://github.com/NightMarethyu)). See my other projects on [my portfolio](https://nightmarethyu.github.io/).
+
 ## License
 
 The code is under the license in [LICENSE](LICENSE).
 
-The icons in `src/assets/icons/` are original drawings by [@NightMarethyu](https://github.com/NightMarethyu). The app recolors them to suit the theme but doesn't change their shapes.
+The icons in `src/assets/icons/` are original drawings by Ammon Turner ([@NightMarethyu](https://github.com/NightMarethyu)). The app recolors them to suit the theme but doesn't change their shapes.
 
 The Legend of Zelda is a trademark of Nintendo. This is an unofficial fan project and is not affiliated with or endorsed by Nintendo. It uses no Nintendo assets.

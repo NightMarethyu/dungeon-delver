@@ -158,6 +158,10 @@ export default function Landing() {
 
       <footer className="landing-footer muted">
         <p>
+          Made by <a href="https://nightmarethyu.github.io/">Ammon Turner</a>. See{' '}
+          <a href="https://nightmarethyu.github.io/#projects">more of my projects</a>.
+        </p>
+        <p>
           A fan project. The Legend of Zelda is a trademark of Nintendo; this site isn&apos;t affiliated with or endorsed by Nintendo and uses
           no Nintendo assets.{' '}
           <a href="https://github.com/NightMarethyu/dungeon-delver">Source on GitHub</a>. Version {version}.
