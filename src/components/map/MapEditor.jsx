@@ -1,16 +1,23 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { addEdge, addRoom, removeEdge, removeRoom, updateRoom } from '../../model/edit.js'
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { addEdge, addRoom, updateRoom } from '../../model/edit.js'
 import { belowAll, freePosition } from '../graph/layout.js'
 import Icon from '../icons/Icon.jsx'
 import { gateIconName, passageIconName, puzzleRooms } from '../icons/icons.js'
 import RoomChips from '../icons/RoomChips.jsx'
 import { GATE_LABELS, KIND_LABELS, MARK_TAGS, ROLE_TAGS } from '../labels.js'
 import { floorMarks } from '../results.js'
+import { useCoarsePointer } from '../useCoarsePointer.js'
 import { doorlessNeighbors, floorLinks, mapConnections } from './doors.js'
 import { bounds, CELL, fits, freeSpot, moveRect, resizeRect, ROOM_SIZE, sharedWall, spotBeside, withMapLayout } from './grid.js'
 
 const HANDLES = ['nw', 'ne', 'sw', 'se']
-const HANDLE_SIZE = 10
+// Sizes of the things to grab, in pixels: for a mouse, and for a finger.
+const GRAB = {
+  fine: { handle: 10, knob: 8, spot: 11, doorPad: 0 },
+  coarse: { handle: 22, knob: 14, spot: 16, doorPad: 10 },
+}
+// Two taps closer together than this, in ms and pixels, are a double tap.
+const DOUBLE_TAP = { time: 350, distance: 30 }
 const MIN_ZOOM = 0.25
 const MAX_ZOOM = 3
 // Cells of empty space kept around the rooms when the view fits them.
@@ -48,7 +55,7 @@ function floorTabs(dungeon) {
 // What a floor tab's dot says, for its tooltip.
 const FLOOR_MARK_TITLES = { path: 'The critical path goes through here', here: 'The player is here', stuck: 'The player is stuck here' }
 
-function MapRoom({ room, rect, role, mark, selected, invalid, hasPuzzle, links, onPointerDown }) {
+function MapRoom({ room, rect, role, mark, selected, invalid, hasPuzzle, links, grab, onPointerDown }) {
   const w = rect.w * CELL
   const h = rect.h * CELL
   const classes = ['map-room', selected && 'selected', role && `role-${role}`, mark && `mark-${mark}`, invalid && 'invalid'].filter(Boolean).join(' ')
@@ -90,10 +97,10 @@ function MapRoom({ room, rect, role, mark, selected, invalid, hasPuzzle, links, 
           <rect
             key={handle}
             className={`map-handle handle-${handle}`}
-            x={(handle.includes('w') ? 0 : w) - HANDLE_SIZE / 2}
-            y={(handle.includes('n') ? 0 : h) - HANDLE_SIZE / 2}
-            width={HANDLE_SIZE}
-            height={HANDLE_SIZE}
+            x={(handle.includes('w') ? 0 : w) - grab.handle / 2}
+            y={(handle.includes('n') ? 0 : h) - grab.handle / 2}
+            width={grab.handle}
+            height={grab.handle}
             onPointerDown={(e) => onPointerDown(e, handle)}
           />
         ))}
@@ -133,7 +140,7 @@ function GateBadge({ at, gate }) {
  * One connection on the map: a door on the wall two rooms share, or a dashed
  * line between rooms that are connected but not yet side by side.
  */
-function MapConnection({ connection, rects, mark, selected, title, onPointerDown }) {
+function MapConnection({ connection, rects, mark, selected, title, grab, onPointerDown }) {
   const { edge, door, line } = connection
   const classes = ['map-connection', `gate-${edge.gate.type}`, `kind-${edge.kind}`, mark, selected && 'selected', line && 'apart']
     .filter(Boolean)
@@ -148,6 +155,9 @@ function MapConnection({ connection, rects, mark, selected, title, onPointerDown
     return (
       <g className={classes} onPointerDown={onPointerDown}>
         <title>{title}</title>
+        {grab.doorPad > 0 && (
+          <rect className="map-door-hit" x={at.x - w / 2 - grab.doorPad} y={at.y - h / 2 - grab.doorPad} width={w + 2 * grab.doorPad} height={h + 2 * grab.doorPad} />
+        )}
         <rect className="map-door" x={at.x - w / 2} y={at.y - h / 2} width={w} height={h} rx={3} />
         {edge.oneWay && <Arrow at={{ x: at.x + dir.x * CELL * 0.45, y: at.y + dir.y * CELL * 0.45 }} dir={dir} />}
         <GateBadge at={at} gate={edge.gate} />
@@ -169,7 +179,7 @@ function MapConnection({ connection, rects, mark, selected, title, onPointerDown
 }
 
 // A "+" on a shared wall with no door in it yet. Clicking it adds the door.
-function DoorSpot({ a, b, suggested, title, onAdd }) {
+function DoorSpot({ a, b, suggested, title, radius, onAdd }) {
   const wall = sharedWall(a, b)
   if (!wall) return null
   const at = { x: ((wall.x1 + wall.x2) / 2) * CELL, y: ((wall.y1 + wall.y2) / 2) * CELL }
@@ -183,7 +193,7 @@ function DoorSpot({ a, b, suggested, title, onAdd }) {
       }}
     >
       <title>{title}</title>
-      <circle r={BADGE_RADIUS} />
+      <circle r={radius} />
       <path d="M -4.5 0 H 4.5 M 0 -4.5 V 4.5" />
     </g>
   )
@@ -192,7 +202,8 @@ function DoorSpot({ a, b, suggested, title, onAdd }) {
 /**
  * The map view: one floor at a time, rooms as rectangles on a snap grid.
  * Drag a room to move it, drag a corner of the selected room to resize it,
- * drag empty space to pan, and scroll to zoom.
+ * drag empty space to pan, and scroll to zoom. On a touch screen, pinch to
+ * zoom and double-tap to add a room, and the things to grab are drawn bigger.
  *
  * Only the dungeon's own connections are drawn. One between rooms on this
  * floor is a door on the wall they share, or a dashed line until they're moved
@@ -210,8 +221,9 @@ function DoorSpot({ a, b, suggested, title, onAdd }) {
  *
  * Takes the same props as GraphEditor.
  */
-export default function MapEditor({ dungeon, onChange, selection, onSelect, highlights }) {
+export default function MapEditor({ dungeon, onChange, selection, onSelect, highlights, commands }) {
   const svg = useRef(null)
+  const grab = GRAB[useCoarsePointer() ? 'coarse' : 'fine']
   const laidOut = useMemo(() => withMapLayout(dungeon), [dungeon])
   const tabs = floorTabs(dungeon)
 
@@ -291,6 +303,56 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect, high
     return () => node.removeEventListener('wheel', onWheel)
   }, [zoomAt])
 
+  // Fingers on the map, by pointer id, and the pinch two of them are making:
+  // where they started, and the view then.
+  const touches = useRef(new Map())
+  const pinch = useRef(null)
+  // The last tap on empty space, to spot a double tap, and when the map was
+  // last touched, so a double tap isn't also taken as a double click.
+  const lastTap = useRef(null)
+  const touchedAt = useRef(-Infinity)
+
+  function onTouchStart(event) {
+    if (event.pointerType !== 'touch') return
+    touchedAt.current = event.timeStamp
+    touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    if (touches.current.size !== 2 || !view) return
+    // A second finger turns whatever the first one started into a pinch.
+    event.stopPropagation()
+    setDrag(null)
+    const [a, b] = [...touches.current.values()]
+    pinch.current = { a, b, view }
+  }
+
+  useEffect(() => {
+    function onMove(event) {
+      if (!touches.current.has(event.pointerId)) return
+      touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+      const start = pinch.current
+      if (!start || touches.current.size < 2) return
+      const [a, b] = [...touches.current.values()]
+      const box = svg.current.getBoundingClientRect()
+      const zoom = clampZoom((start.view.zoom * Math.hypot(a.x - b.x, a.y - b.y)) / Math.max(1, Math.hypot(start.a.x - start.b.x, start.a.y - start.b.y)))
+      // Keep the point that was between the fingers between them.
+      const from = { x: (start.a.x + start.b.x) / 2 - box.left, y: (start.a.y + start.b.y) / 2 - box.top }
+      const to = { x: (a.x + b.x) / 2 - box.left, y: (a.y + b.y) / 2 - box.top }
+      const anchor = { x: start.view.x + from.x / start.view.zoom, y: start.view.y + from.y / start.view.zoom }
+      setView({ zoom, x: anchor.x - to.x / zoom, y: anchor.y - to.y / zoom })
+    }
+    function onEnd(event) {
+      touches.current.delete(event.pointerId)
+      if (touches.current.size < 2) pinch.current = null
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onEnd)
+    window.addEventListener('pointercancel', onEnd)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onEnd)
+      window.removeEventListener('pointercancel', onEnd)
+    }
+  }, [])
+
   // The rects of this floor's rooms, other than room `id`.
   const others = (id) => rooms.filter((r) => r.id !== id).map((r) => r.rect)
 
@@ -341,6 +403,16 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect, high
 
   function startPan(event) {
     if (event.button !== 0) return
+    if (event.pointerType === 'touch') {
+      const tap = { time: event.timeStamp, x: event.clientX, y: event.clientY }
+      const last = lastTap.current
+      if (last && tap.time - last.time < DOUBLE_TAP.time && Math.hypot(tap.x - last.x, tap.y - last.y) < DOUBLE_TAP.distance) {
+        lastTap.current = null
+        addRoomAt(toCanvas(event))
+        return
+      }
+      lastTap.current = tap
+    }
     setDrag({ mode: 'pan', client: { x: event.clientX, y: event.clientY }, view, moved: false })
   }
 
@@ -420,16 +492,31 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect, high
     else addRoomAt({ x: view.x + size.w / view.zoom / 2, y: view.y + size.h / view.zoom / 2 })
   }
 
-  function onKeyDown(event) {
-    if (!selectedRoom && !selectedEdge) return
-    if (event.key === 'Delete' || event.key === 'Backspace') {
-      event.preventDefault()
-      onChange((d) => (selectedRoom ? removeRoom(d, selectedRoom.id) : removeEdge(d, selectedEdge.id)))
-      onSelect(null)
-    } else if (event.key === 'Escape') {
-      onSelect(null)
+  // Moves room `id` a cell, or with `resize`, grows or shrinks it from its
+  // bottom-right corner. A room can't go on top of another.
+  function nudge(id, dx, dy, resize) {
+    const rect = rects.get(id)
+    if (!rect) return false
+    const next = resize ? resizeRect(rect, 'se', dx, dy) : moveRect(rect, dx, dy)
+    if (!sameRect(next, rect) && fits(next, others(id))) {
+      edit((d) => updateRoom(d, id, { rect: next }))
+      offerDoors(id, rooms.map((r) => (r.id === id ? { ...r, rect: next } : r)))
     }
+    return true
   }
+
+  const center = () => ({ x: size.w / 2, y: size.h / 2 })
+  useImperativeHandle(commands, () => ({
+    addRoom: () => view && floor && addRoomInView(),
+    nudge,
+    floor(step) {
+      const next = tabs[tabs.findIndex((f) => f.id === floor) + step]
+      if (next) setFloorChoice(next.id)
+    },
+    zoomIn: () => view && zoomAt(1.25, center()),
+    zoomOut: () => view && zoomAt(0.8, center()),
+    fit: () => view && setView(fitView(rooms.map((r) => r.rect), size)),
+  }))
 
   const connections = mapConnections(rooms, dungeon.edges)
   const puzzles = puzzleRooms(dungeon)
@@ -478,7 +565,6 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect, high
   }
   for (const o of offered) if (!spots.some(([a, b]) => a === offer.id && b === o)) spots.push([offer.id, o])
 
-  const center = () => ({ x: size.w / 2, y: size.h / 2 })
   const tabMarks = floorMarks(dungeon, highlights.rooms)
 
   return (
@@ -509,7 +595,7 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect, high
           viewBox={view && size ? `${view.x} ${view.y} ${size.w / view.zoom} ${size.h / view.zoom}` : '0 0 1 1'}
           tabIndex={0}
           aria-label="Dungeon map"
-          onKeyDown={onKeyDown}
+          onPointerDownCapture={onTouchStart}
         >
           <defs>
             <pattern id="map-grid" width={CELL} height={CELL} patternUnits="userSpaceOnUse">
@@ -526,7 +612,7 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect, high
                 height={size.h / view.zoom}
                 fill="url(#map-grid)"
                 onPointerDown={startPan}
-                onDoubleClick={(e) => addRoomAt(toCanvas(e))}
+                onDoubleClick={(e) => e.timeStamp - touchedAt.current > 1000 && addRoomAt(toCanvas(e))}
               />
               {rooms.map((room) => {
                 const dragging = drag?.id === room.id && drag.mode !== 'connect'
@@ -542,6 +628,7 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect, high
                     invalid={dragging && !fits(rect, others(room.id))}
                     hasPuzzle={puzzles.has(room.id)}
                     links={links.get(room.id) ?? []}
+                    grab={grab}
                     onPointerDown={(e, mode) => startRoomDrag(e, room, mode)}
                   />
                 )
@@ -554,6 +641,7 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect, high
                     mark={highlights.edges.get(c.edge.id)}
                     selected={selectedEdge?.id === c.edge.id}
                     title={edgeTitle(c.edge, names)}
+                    grab={grab}
                     onPointerDown={(e) => selectEdge(e, c.edge)}
                   />
                 ))}
@@ -565,17 +653,18 @@ export default function MapEditor({ dungeon, onChange, selection, onSelect, high
                     b={rects.get(b)}
                     suggested={offered.includes(b) && offer.id === a}
                     title={`Add a door between ${names(a)} and ${names(b)}`}
+                    radius={grab.spot}
                     onAdd={() => connect(a, b)}
                   />
                 ))}
               {selectedRoom && rects.has(selectedRoom.id) && !drag && (
                 <g
                   className="map-connect-knob"
-                  transform={`translate(${(rects.get(selectedRoom.id).x + rects.get(selectedRoom.id).w) * CELL - 15} ${rects.get(selectedRoom.id).y * CELL + 15})`}
+                  transform={`translate(${(rects.get(selectedRoom.id).x + rects.get(selectedRoom.id).w) * CELL - 7 - grab.knob} ${rects.get(selectedRoom.id).y * CELL + 7 + grab.knob})`}
                   onPointerDown={(e) => startConnect(e, selectedRoom)}
                 >
                   <title>Drag onto another room to connect them</title>
-                  <circle r={8} />
+                  <circle r={grab.knob} />
                   <path d="M -3.5 0 H 3.5 M 1 -3 L 4 0 L 1 3" />
                 </g>
               )}

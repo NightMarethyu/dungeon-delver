@@ -67,7 +67,7 @@ function RoomPanel({ room, dungeon, onChange, onSelect }) {
       <h2>Room</h2>
       <label className="field">
         <span>Name</span>
-        <input value={room.label} onChange={(e) => update({ label: e.target.value })} />
+        <input id="room-name" value={room.label} onChange={(e) => update({ label: e.target.value })} />
       </label>
       <label className="field">
         <span>Floor</span>
@@ -337,6 +337,7 @@ function Help({ view }) {
             <li><strong>Add a door</strong> by clicking a <strong>+</strong> on a wall two rooms share, or by dragging the arrow in the selected room&apos;s corner onto another room.</li>
             <li><strong>Stairs and holes</strong> to other floors show inside their room. Click one to go to the room it leads to. Connect rooms on different floors in the graph, or by moving a room to another floor here.</li>
             <li><strong>Select</strong> a room or door to edit it here, and rename it. Click empty space to come back.</li>
+            <li>On a touch screen, <strong>pinch</strong> to zoom and <strong>double-tap</strong> the grid to add a room.</li>
           </>
         ) : (
           <>
@@ -344,10 +345,13 @@ function Help({ view }) {
             <li><strong>Connect rooms</strong> by dragging from the dot on a room&apos;s edge to another room.</li>
             <li><strong>Select</strong> a room or connection to edit it here. Click empty space to come back.</li>
             <li><strong>Rename</strong> a room by double-clicking its name.</li>
+            <li>On a touch screen, <strong>pinch</strong> to zoom and <strong>double-tap</strong> empty space to add a room.</li>
           </>
         )}
         <li><strong>Delete</strong> the selected room or connection with Delete or Backspace.</li>
         <li><strong>Set a start and goal</strong> and the check above the canvas updates as you edit.</li>
+        <li><strong>Undo</strong> with the ↶ button or <kbd>Ctrl</kbd> <kbd>Z</kbd>.</li>
+        <li className="key-hint">Press <kbd>?</kbd> for all the keyboard shortcuts.</li>
       </ul>
     </details>
   )

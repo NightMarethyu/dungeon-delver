@@ -2,6 +2,17 @@
 
 All notable changes to Dungeon Delver. Versions match the git tags.
 
+## Unreleased
+
+Quality of life: undo, keyboard shortcuts, and a layout for phones.
+
+### Added
+
+- **Undo and redo**, with the ↶ ↷ buttons in the header or Ctrl+Z and Ctrl+Shift+Z (⌘ on a Mac). A quick burst of edits, like dragging a room or typing a name, undoes in one step; adding or removing a room or connection is always its own step.
+- **Keyboard shortcuts** in the builder, listed by pressing **?** or the ? button: **N** to add a room, arrow keys to move the selected room (Shift+arrows resize it on the map), **Delete**, **Enter** to rename, **S** and **G** for start and goal, **V** to switch views, **[** and **]** for floors, and **+**, **−**, **0** to zoom. Arrow keys still step through softlock playback when nothing is selected. Shortcuts are off while typing in a field.
+- **Phone layout.** On small screens the builder fills the screen: a one-line header with the less used buttons in a ⋯ menu, the map or graph taking the rest, and the side panel as a sheet that opens from the bottom. The softlock list makes way for the map during playback.
+- **Touch editing on the map.** Pinch to zoom, double-tap the grid to add a room, and bigger corners, door targets, "+" spots, and connect arrow on touch screens. Double-tapping empty space adds a room in the graph too, and its connection dots are bigger.
+
 ## 1.0 (2026-10-22)
 
 The map view is finished: a dungeon can be laid out floor by floor, and the solver's results show on the map as well as on the graph.

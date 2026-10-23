@@ -13,6 +13,8 @@ It's a static site, hosted on GitHub Pages, with no accounts and no server. Vers
 - **Lay out the dungeon as a map.** The builder opens on the map: one floor at a time, with rooms as rectangles on a snap grid. Drag rooms to move them, drag a corner to resize, and double-click the grid to add a room. Rooms connected on the same floor sit side by side with a door in their shared wall, marked with its lock's icon. Stairs and holes to other floors show inside their room, with arrows for one-way stairs; click one to jump to the room it leads to. Add a door by clicking the **+** on a shared wall or dragging the arrow in a selected room's corner onto another room, and when you put a room against another the map offers to add one. Rooms that have never been on the map are placed automatically, beside the rooms they connect to.
 - **Puzzle locks.** A connection can be locked by a puzzle solved inside one of its rooms, like a shutter that opens once you solve the room. It opens from that side only, then stays open both ways, so the solver can tell when a drop or a key choice leaves the player on the wrong side. A puzzle on the door itself (like a lockpicking minigame) can be solved from either side.
 - **Or build it as a graph.** Switch from Map to Graph to add, rename, move, and delete rooms as nodes, and drag between them to connect them. The side panel edits a room's contents (small keys, the big key, named items) or a connection's lock (small key, big key, item, puzzle) and kind (door, stairs, drop, passage, one-way). Pick the start and goal rooms, and sort rooms into floors.
+- **Undo and keyboard shortcuts.** Undo and redo any edit with the ↶ ↷ buttons or Ctrl+Z / Ctrl+Shift+Z (⌘ on a Mac). Press **?** in the builder for the full list: **N** adds a room, the arrow keys move the selected room (Shift+arrows resize it on the map), **Delete** removes it, **Enter** renames it, **S** and **G** make it the start or goal, **V** switches between map and graph, **[** and **]** change floors, and **+**, **−**, **0** zoom.
+- **Works on phones.** On a small screen the map fills the page, the header folds into a ⋯ menu, and the side panel becomes a sheet you open from the bottom. Pinch to zoom, double-tap the grid to add a room, and the corners, doors, and connect arrow are drawn bigger for fingers.
 - **Light and dark themes.** The site follows your system setting until you pick one with the toggle in the header.
 - **Live results.** The solver re-checks the dungeon as you edit. A banner says whether it's beatable and how a player could get stuck, and both the map and the graph highlight the critical path, optional rooms, and unreachable rooms. On the map, each floor's tab gets a dot when the critical path goes through it.
 - **Softlock playback.** Step through each way a player can get stuck, one door or drop at a time, and see which rooms they're trapped in. On the map, playback switches to the floor where each step happens.
@@ -28,6 +30,8 @@ It's a static site, hosted on GitHub Pages, with no accounts and no server. Vers
 ![Live results on the graph view of the Sunken Cistern](docs/screenshots/live-results.png)
 
 ![A dungeon opened from a share link](docs/screenshots/shared-link.png)
+
+<img src="docs/screenshots/phone-playback.png" alt="Softlock playback on a phone, in the dark theme" width="300">
 
 ## How the solver works
 
@@ -48,11 +52,7 @@ The solver is tested against small hand-made dungeons in `src/solver/__fixtures_
 - Phase 0 and 1: the dungeon format and the solver, tested against hand-made fixture dungeons.
 - Phase 2 (v0.1): the graph editor, live results, softlock playback, saves, share links, JSON export, and examples.
 - Phase 3 (1.0): the map view, doors in shared walls, clickable stairs and holes between floors, the drawn icons, puzzle locks, and solver highlights and softlock playback on the map. The light and dark themes from Phase 4 are done too.
-
-**Next: polish (1.x)**
-
-- Keyboard shortcuts for common editing actions.
-- A phone layout, for viewing and softlock playback at least.
+- Phase 4 (1.1, unreleased): undo and redo, keyboard shortcuts, and a phone layout with touch editing.
 
 **After 1.0: a dungeon builder for tabletop RPGs**
 

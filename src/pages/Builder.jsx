@@ -3,12 +3,16 @@ import GraphEditor from '../components/graph/GraphEditor.jsx'
 import MapEditor from '../components/map/MapEditor.jsx'
 import Playback from '../components/panels/Playback.jsx'
 import ResultsBanner from '../components/panels/ResultsBanner.jsx'
+import ShortcutsDialog from '../components/panels/ShortcutsDialog.jsx'
 import SidePanel from '../components/panels/SidePanel.jsx'
 import ThemeToggle from '../components/ThemeToggle.jsx'
 import { pathEdges, playbackMarks, roomMarks } from '../components/results.js'
+import { keyBelongsTo, shortcutFor } from '../components/shortcuts.js'
 import { useDebounced } from '../components/useDebounced.js'
 import { EXAMPLES } from '../examples/index.js'
 import { emptyDungeon } from '../model/dungeon.js'
+import { removeEdge, removeRoom, setEndpoint } from '../model/edit.js'
+import { record, redo, sameParts, startHistory, undo } from '../model/history.js'
 import { loadDungeon } from '../model/load.js'
 import { HOME_HREF, editHref, navigate, parseHash, shareHref } from '../routing.js'
 import { browserStorage, createSave, readSave, writeSave } from '../storage/saves.js'
@@ -201,13 +205,69 @@ export function ExampleBuilder({ exampleId }) {
   return <Editor id={null} initial={initial} example />
 }
 
+// What the panel toggle says on a phone, where the panel is a sheet under the canvas.
+function sheetTitle(dungeon, selection) {
+  if (selection?.kind === 'room') return `Edit ${dungeon.rooms.find((r) => r.id === selection.id).label || 'room'}`
+  if (selection?.kind === 'edge') return 'Edit connection'
+  return 'Dungeon settings'
+}
+
+// The canvas commands each shortcut runs, by the editor's action name.
+const CANVAS_ACTIONS = {
+  addRoom: (c) => c.addRoom(),
+  prevFloor: (c) => c.floor(-1),
+  nextFloor: (c) => c.floor(1),
+  zoomIn: (c) => c.zoomIn(),
+  zoomOut: (c) => c.zoomOut(),
+  fit: (c) => c.fit(),
+}
+
+/**
+ * The header buttons that fold into a "⋯" menu on a phone. On wider screens
+ * they sit in the header as usual.
+ */
+function MoreMenu({ children }) {
+  const [open, setOpen] = useState(false)
+  const menu = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const close = (e) => menu.current && !menu.current.contains(e.target) && setOpen(false)
+    window.addEventListener('pointerdown', close)
+    return () => window.removeEventListener('pointerdown', close)
+  }, [open])
+
+  return (
+    <div className="more-menu" ref={menu}>
+      <button type="button" className="more-toggle icon" aria-expanded={open} aria-label="More actions" title="More actions" onClick={() => setOpen(!open)}>
+        ⋯
+      </button>
+      <div className={`more-items${open ? ' open' : ''}`}>{children}</div>
+    </div>
+  )
+}
+
 function Editor({ id, initial, shared = false, example = false }) {
-  const [dungeon, setDungeon] = useState(initial)
+  // The dungeon, with the edits before and after it for undo and redo.
+  const [history, setHistory] = useState(() => startHistory(initial))
+  const dungeon = history.present
+  const setDungeon = useCallback(
+    (update) => setHistory((h) => record(h, typeof update === 'function' ? update(h.present) : update, Date.now(), sameParts)),
+    [],
+  )
   // What's selected on the canvas: { kind: 'room' | 'edge', id } or null.
+  // An undo can take away what was selected, and then nothing is.
   const [selection, setSelection] = useState(null)
+  const selected =
+    selection && (selection.kind === 'room' ? dungeon.rooms : dungeon.edges).some((x) => x.id === selection.id) ? selection : null
   const saveStatus = useAutosave(id, dungeon, shared ? 'shared' : example ? 'example' : 'off')
   const [view, setView] = useEditorView()
   const Canvas = view === 'map' ? MapEditor : GraphEditor
+  // Commands the canvas offers the keyboard shortcuts (see CANVAS_ACTIONS).
+  const canvas = useRef(null)
+  const [helpOpen, setHelpOpen] = useState(false)
+  // Whether the side panel is open, on a phone.
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   function saveCopy() {
     const copyId = createSave(browserStorage(), dungeon)
@@ -238,26 +298,109 @@ function Editor({ id, initial, shared = false, example = false }) {
     document.title = `${dungeon.name || 'Untitled Dungeon'} · Dungeon Delver`
   }, [dungeon.name])
 
+  // Runs a keyboard shortcut. Returns false when it has nothing to do, so the
+  // key keeps its usual meaning.
+  function runShortcut({ action, dx, dy, shift }) {
+    const room = selected?.kind === 'room' ? selected.id : null
+    switch (action) {
+      case 'undo':
+        setHistory(undo)
+        return true
+      case 'redo':
+        setHistory(redo)
+        return true
+      case 'delete':
+        if (!selected) return false
+        setDungeon((d) => (selected.kind === 'room' ? removeRoom(d, selected.id) : removeEdge(d, selected.id)))
+        setSelection(null)
+        return true
+      case 'escape':
+        if (playing) setPlayback(null)
+        else if (selected) setSelection(null)
+        else return false
+        return true
+      case 'rename':
+        if (!room) return false
+        setSheetOpen(true)
+        requestAnimationFrame(() => document.getElementById('room-name')?.select())
+        return true
+      case 'setStart':
+      case 'setGoal':
+        if (!room) return false
+        setDungeon((d) => setEndpoint(d, action === 'setStart' ? 'start' : 'goal', room))
+        return true
+      case 'toggleView':
+        setView(view === 'map' ? 'graph' : 'map')
+        return true
+      case 'help':
+        setHelpOpen(true)
+        return true
+      case 'arrow':
+        if (room) return canvas.current?.nudge(room, dx, dy, shift) ?? false
+        // With nothing selected, left and right step through playback.
+        if (steps && dy === 0) {
+          const next = at + dx
+          if (next >= 0 && next < steps.length) setPlayback({ ...playing, at: next })
+          return true
+        }
+        return false
+      default:
+        if (!CANVAS_ACTIONS[action] || !canvas.current) return false
+        CANVAS_ACTIONS[action](canvas.current)
+        return true
+    }
+  }
+
+  // Shortcuts work wherever focus is, except in a field or the shortcuts list.
+  const shortcutHandler = useRef(runShortcut)
+  useEffect(() => {
+    shortcutHandler.current = helpOpen ? () => false : runShortcut
+  })
+  useEffect(() => {
+    function onKeyDown(event) {
+      const shortcut = shortcutFor(event)
+      if (!shortcut || event.defaultPrevented || keyBelongsTo(event.target, shortcut)) return
+      // The graph moves a focused room with the arrow keys itself.
+      if (shortcut.action === 'arrow' && event.target.closest?.('.react-flow__node')) return
+      if (shortcutHandler.current(shortcut)) event.preventDefault()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
   return (
     <div className="app">
       <header className="app-header">
-        <a className="home-link" href={HOME_HREF} title="All your dungeons">
-          ← Dungeon Delver
+        <a className="home-link" href={HOME_HREF} title="All your dungeons" aria-label="All your dungeons">
+          ← <span className="home-text">Dungeon Delver</span>
         </a>
         <h1>{dungeon.name || 'Untitled Dungeon'}</h1>
         <span className={`save-status save-${saveStatus}`}>{SAVE_STATUS[saveStatus]}</span>
         <div className="header-actions">
           <ViewSwitch view={view} onChange={setView} />
+          <div className="undo-redo">
+            <button type="button" className="icon" onClick={() => setHistory(undo)} disabled={history.past.length === 0} aria-label="Undo" title="Undo (Ctrl+Z)">
+              ↶
+            </button>
+            <button type="button" className="icon" onClick={() => setHistory(redo)} disabled={history.future.length === 0} aria-label="Redo" title="Redo (Ctrl+Shift+Z)">
+              ↷
+            </button>
+          </div>
           {shared && (
             <button type="button" className="primary" onClick={saveCopy}>
               Save a copy
             </button>
           )}
-          <ShareButton dungeon={dungeon} />
-          <button type="button" onClick={() => downloadText(exportFileName(dungeon), exportJson(dungeon))} title="Download this dungeon as a JSON file">
-            Export JSON
-          </button>
-          <ThemeToggle />
+          <MoreMenu>
+            <ShareButton dungeon={dungeon} />
+            <button type="button" onClick={() => downloadText(exportFileName(dungeon), exportJson(dungeon))} title="Download this dungeon as a JSON file">
+              Export JSON
+            </button>
+            <button type="button" className="icon shortcuts-button" onClick={() => setHelpOpen(true)} aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
+              ?
+            </button>
+            <ThemeToggle />
+          </MoreMenu>
         </div>
       </header>
       <main className="workspace">
@@ -279,15 +422,23 @@ function Editor({ id, initial, shared = false, example = false }) {
             />
           )}
           <Canvas
+            commands={canvas}
             dungeon={dungeon}
             onChange={setDungeon}
-            selection={selection}
+            selection={selected}
             onSelect={setSelection}
             highlights={highlights}
           />
         </div>
-        <SidePanel dungeon={dungeon} selection={selection} onChange={setDungeon} onSelect={setSelection} view={view} />
+        <div className={`panel-sheet${sheetOpen ? ' open' : ''}`}>
+          <button type="button" className="sheet-toggle" aria-expanded={sheetOpen} onClick={() => setSheetOpen(!sheetOpen)}>
+            <span>{sheetTitle(dungeon, selected)}</span>
+            <span aria-hidden="true">{sheetOpen ? '▾' : '▴'}</span>
+          </button>
+          <SidePanel dungeon={dungeon} selection={selected} onChange={setDungeon} onSelect={setSelection} view={view} />
+        </div>
       </main>
+      {helpOpen && <ShortcutsDialog onClose={() => setHelpOpen(false)} />}
     </div>
   )
 }
