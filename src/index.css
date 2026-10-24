@@ -57,7 +57,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
   color: inherit;
 }
@@ -100,7 +101,8 @@ button.icon {
 }
 
 input,
-select {
+select,
+textarea {
   border: 1px solid var(--border);
   background: var(--surface);
   border-radius: 6px;
@@ -854,6 +856,13 @@ button.link {
   min-width: 1.2rem;
   text-align: center;
   font-size: 0.8rem;
+}
+
+.notes textarea {
+  resize: vertical;
+  min-height: 2.6rem;
+  field-sizing: content;
+  max-height: 16rem;
 }
 
 .floors .hint {

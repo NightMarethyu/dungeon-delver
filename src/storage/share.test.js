@@ -12,6 +12,12 @@ describe('share links', () => {
     expect(problems.filter((p) => p.severity === 'error')).toEqual([])
   })
 
+  it('keeps room notes', () => {
+    const notes = { description: 'A flooded hall.', enemies: 'Two eels', secrets: 'Lever behind the falls' }
+    const withNotes = { ...dungeon, rooms: dungeon.rooms.map((r, i) => (i === 0 ? { ...r, notes } : r)) }
+    expect(decodeShare(encodeShare(withNotes)).dungeon.rooms[0].notes).toEqual(notes)
+  })
+
   it('only uses characters that are safe in a URL hash', () => {
     expect(encodeShare(dungeon)).toMatch(/^[A-Za-z0-9+\-$]+$/)
   })

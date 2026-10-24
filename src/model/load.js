@@ -4,7 +4,7 @@
 // loadDungeon never throws. It returns { dungeon, problems }. If the input
 // can't be read as a dungeon at all, dungeon is null and problems explains why.
 
-import { CURRENT_VERSION } from './dungeon.js'
+import { CURRENT_VERSION, NOTE_FIELDS } from './dungeon.js'
 import { validateDungeon } from './validate.js'
 
 // MIGRATIONS[n] turns a version n dungeon into version n + 1.
@@ -14,6 +14,8 @@ const MIGRATIONS = {
   1: (raw) => raw,
   // Version 3 added the puzzle gate. Nothing to change.
   2: (raw) => raw,
+  // Version 4 added the optional rooms[].notes. Nothing to change.
+  3: (raw) => raw,
 }
 
 const fatal = (code, message) => ({
@@ -22,6 +24,13 @@ const fatal = (code, message) => ({
 })
 
 const asArray = (value) => (Array.isArray(value) ? value : [])
+
+// Keeps the known note fields that hold text, or nothing when none do.
+function normalizeNotes(notes) {
+  if (!notes || typeof notes !== 'object') return undefined
+  const kept = Object.fromEntries(NOTE_FIELDS.filter((f) => typeof notes[f] === 'string' && notes[f] !== '').map((f) => [f, notes[f]]))
+  return Object.keys(kept).length > 0 ? kept : undefined
+}
 
 function normalize(raw) {
   return {
@@ -37,6 +46,8 @@ function normalize(raw) {
       }
       if (r.rect !== undefined) room.rect = { ...r.rect }
       if (r.graphPos !== undefined) room.graphPos = { ...r.graphPos }
+      const notes = normalizeNotes(r.notes)
+      if (notes) room.notes = notes
       return room
     }),
     edges: asArray(raw.edges).map((e) => ({

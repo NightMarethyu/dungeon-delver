@@ -1,4 +1,4 @@
-import { CONTENT_TYPES, EDGE_KINDS, GATE_TYPES } from '../../model/dungeon.js'
+import { CONTENT_TYPES, EDGE_KINDS, GATE_TYPES, NOTE_FIELDS } from '../../model/dungeon.js'
 import {
   addFloor,
   itemNames,
@@ -10,12 +10,13 @@ import {
   renameFloor,
   reverseEdge,
   setEndpoint,
+  setRoomNote,
   updateEdge,
   updateRoom,
 } from '../../model/edit.js'
 import Icon from '../icons/Icon.jsx'
 import { contentIconName, gateIconName, passageIconName } from '../icons/icons.js'
-import { CONTENT_LABELS, GATE_LABELS, KIND_LABELS } from '../labels.js'
+import { CONTENT_LABELS, GATE_LABELS, KIND_LABELS, NOTE_LABELS } from '../labels.js'
 
 const ITEM_LIST_ID = 'known-items'
 
@@ -128,6 +129,7 @@ function RoomPanel({ room, dungeon, onChange, onSelect }) {
         </div>
       </fieldset>
       <PuzzleNote room={room} dungeon={dungeon} onSelect={onSelect} />
+      <RoomNotes room={room} onChange={onChange} />
 
       <button
         type="button"
@@ -140,6 +142,26 @@ function RoomPanel({ room, dungeon, onChange, onSelect }) {
         Delete room
       </button>
     </>
+  )
+}
+
+// The game master's notes, one box per kind of note. The solver ignores them.
+function RoomNotes({ room, onChange }) {
+  return (
+    <fieldset className="contents notes">
+      <legend>Notes for the game master</legend>
+      {NOTE_FIELDS.map((field) => (
+        <label className="field" key={field}>
+          <span>{NOTE_LABELS[field].label}</span>
+          <textarea
+            rows={2}
+            placeholder={NOTE_LABELS[field].hint}
+            value={room.notes?.[field] ?? ''}
+            onChange={(e) => onChange((d) => setRoomNote(d, room.id, field, e.target.value))}
+          />
+        </label>
+      ))}
+    </fieldset>
   )
 }
 

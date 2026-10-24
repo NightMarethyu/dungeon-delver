@@ -35,6 +35,14 @@ describe('saves', () => {
     expect(readSave(storage, 'missing')).toBeNull()
   })
 
+  it('keeps room notes', () => {
+    const storage = memoryStorage()
+    const room = { id: 'r1', floor: '1F', label: 'Crypt', contents: [], notes: { enemies: 'Three skeletons', other: 'Run this one spooky' } }
+    const dungeon = { ...named('Barrow'), rooms: [room] }
+    const id = createSave(storage, dungeon)
+    expect(readSave(storage, id).dungeon.rooms[0]).toEqual(room)
+  })
+
   it('migrates old formats on read', () => {
     const storage = memoryStorage()
     storage.setItem(SAVES_KEY, JSON.stringify({ old: { updatedAt: 1, dungeon: { ...named('Old'), version: 1 } } }))
