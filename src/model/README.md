@@ -8,11 +8,11 @@ The JSDoc types are in [`dungeon.js`](dungeon.js). Load saved or shared JSON wit
 
 ```json
 {
-  "version": 3,
+  "version": 4,
   "name": "Example Dungeon",
   "floors": [{ "id": "1F", "name": "Ground Floor" }],
   "rooms": [
-    { "id": "r1", "floor": "1F", "label": "Entrance", "contents": [{ "type": "smallKey" }] },
+    { "id": "r1", "floor": "1F", "label": "Entrance", "notes": { "description": "A mossy arch.", "traps": "Loose flagstone by the door." }, "contents": [{ "type": "smallKey" }] },
     { "id": "r2", "floor": "1F", "label": "Chest Room", "rect": { "x": 4, "y": 0, "w": 4, "h": 3 }, "contents": [{ "type": "item", "name": "hookshot" }] }
   ],
   "edges": [
@@ -33,6 +33,7 @@ The JSDoc types are in [`dungeon.js`](dungeon.js). Load saved or shared JSON wit
 | `rooms[]` | `{ id, floor, label, contents, rect? }`. | `label` = `id`, `contents` = `[]` |
 | `rooms[].rect` | `{ x, y, w, h }` in grid units. Only the map view uses it. Optional. | Left out |
 | `rooms[].graphPos` | `{ x, y }` in pixels. Only the graph editor uses it; rooms without one are laid out on a grid. Optional. Added in version 2. | Left out |
+| `rooms[].notes` | The game master's notes: `{ description?, enemies?, traps?, treasure?, secrets?, other? }`, each free text. Not tied to any game system, and the solver ignores them. Empty notes are left out, and so is `notes` when every one is empty. Added in version 4. | Left out; unknown fields and non-text values are dropped |
 | `edges[]` | `{ id, from, to, kind, gate, oneWay }`. | `kind` = `"door"`, `gate` = open, `oneWay` = `false` |
 | `start`, `goal` | Room ids. | `null` |
 

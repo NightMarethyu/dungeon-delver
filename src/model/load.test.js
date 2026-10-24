@@ -33,6 +33,19 @@ describe('loadDungeon', () => {
     expect('rect' in dungeon.rooms[1]).toBe(false)
   })
 
+  it('keeps the known room notes that hold text', () => {
+    const notes = { description: 'Damp and dark.', secrets: 'A loose brick.', treasure: '', mood: 'gloomy', enemies: 3 }
+    const { dungeon, problems } = loadDungeon({ ...minimal, rooms: [{ ...minimal.rooms[0], notes }, minimal.rooms[1]] })
+    expect(problems).toEqual([])
+    expect(dungeon.rooms[0].notes).toEqual({ description: 'Damp and dark.', secrets: 'A loose brick.' })
+    expect('notes' in dungeon.rooms[1]).toBe(false)
+  })
+
+  it.each([[{}], [{ treasure: '' }], ['just a string'], [null]])('leaves out notes with no text: %j', (notes) => {
+    const { dungeon } = loadDungeon({ ...minimal, rooms: [{ ...minimal.rooms[0], notes }, minimal.rooms[1]] })
+    expect('notes' in dungeon.rooms[0]).toBe(false)
+  })
+
   it('keeps a room graphPos only when one is given', () => {
     const graphPos = { x: 120, y: -40 }
     const { dungeon } = loadDungeon({ ...minimal, rooms: [{ ...minimal.rooms[0], graphPos }, minimal.rooms[1]] })

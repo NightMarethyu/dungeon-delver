@@ -2,6 +2,14 @@
 
 All notable changes to Dungeon Delver. Versions match the git tags.
 
+## Unreleased
+
+The first step toward a dungeon builder for tabletop RPGs.
+
+### Added
+
+- **Room notes for the game master** (format version 4). Each room has boxes for its description, enemies, traps and hazards, treasure, and hidden details, plus a plain notes box for everything else. They're free text, not tied to any game system, so they fit whatever game you run. Notes are kept in saves, share links, and JSON exports, and the Sunken Cistern example has a few to show how they look.
+
 ## 1.1 (2026-10-23)
 
 Quality of life: undo, keyboard shortcuts, and a layout for phones.

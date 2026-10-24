@@ -6,6 +6,17 @@ export const KIND_LABELS = { door: 'Door', stairs: 'Stairs', drop: 'Drop', passa
 export const GATE_LABELS = { open: 'Open', smallKey: 'Small key', bigKey: 'Big key', item: 'Needs item', puzzle: 'Puzzle' }
 export const CONTENT_LABELS = { smallKey: 'Small key', bigKey: 'Big key', item: 'Item' }
 
+// A room's note fields: the label, and a hint shown in the empty box. Kept
+// system-neutral so any game's stats or rules can go in them.
+export const NOTE_LABELS = {
+  description: { label: 'Description', hint: 'What the players see, hear, and smell when they walk in.' },
+  enemies: { label: 'Enemies', hint: 'Who or what is here, how many, and what they do.' },
+  traps: { label: 'Traps and hazards', hint: 'What sets it off, what happens, and how to spot or get past it.' },
+  treasure: { label: 'Treasure', hint: 'Loot, where it is, and what it is worth.' },
+  secrets: { label: 'Hidden details', hint: 'Clues, secret doors, and things only a careful search finds.' },
+  other: { label: 'Notes', hint: 'Anything else.' },
+}
+
 // Tags on a room for its role, and for the solver's highlight where the color
 // alone isn't enough.
 export const ROLE_TAGS = { start: '▶ Start', goal: '★ Goal' }

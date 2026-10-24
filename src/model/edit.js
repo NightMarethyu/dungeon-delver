@@ -32,6 +32,22 @@ export function updateRoom(dungeon, id, patch) {
   return { ...dungeon, rooms: dungeon.rooms.map((r) => (r.id === id ? { ...r, ...patch } : r)) }
 }
 
+// Sets one of a room's notes. An empty note is left out, and so is `notes`
+// once every note is empty, so rooms without notes stay as they were.
+export function setRoomNote(dungeon, id, field, text) {
+  return {
+    ...dungeon,
+    rooms: dungeon.rooms.map((r) => {
+      if (r.id !== id) return r
+      const notes = { ...r.notes, [field]: text }
+      if (text === '') delete notes[field]
+      const room = { ...r, notes }
+      if (Object.keys(notes).length === 0) delete room.notes
+      return room
+    }),
+  }
+}
+
 // Removes a room along with its connections, and unsets it as start or goal.
 export function removeRoom(dungeon, id) {
   return {

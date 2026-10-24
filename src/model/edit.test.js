@@ -14,6 +14,7 @@ import {
   reverseEdge,
   setEndpoint,
   updateEdge,
+  setRoomNote,
   updateRoom,
 } from './edit.js'
 import { validateDungeon } from './validate.js'
@@ -61,11 +62,23 @@ describe('rooms', () => {
     expect(d.goal).toBe('c')
   })
 
+  it('sets and clears a room note', () => {
+    let d = setRoomNote(sample(), 'b', 'traps', 'Pit under the rug')
+    d = setRoomNote(d, 'b', 'other', 'Smells of smoke')
+    expect(d.rooms[1].notes).toEqual({ traps: 'Pit under the rug', other: 'Smells of smoke' })
+    expect('notes' in d.rooms[0]).toBe(false)
+    d = setRoomNote(d, 'b', 'traps', '')
+    expect(d.rooms[1].notes).toEqual({ other: 'Smells of smoke' })
+    d = setRoomNote(d, 'b', 'other', '')
+    expect('notes' in d.rooms[1]).toBe(false)
+  })
+
   it('leaves its input alone', () => {
     const before = sample()
     const copy = structuredClone(before)
     addRoom(before)
     updateRoom(before, 'a', { label: 'x' })
+    setRoomNote(before, 'a', 'description', 'x')
     removeRoom(before, 'a')
     expect(before).toEqual(copy)
   })
