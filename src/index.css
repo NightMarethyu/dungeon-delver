@@ -1848,6 +1848,58 @@ kbd {
   font-size: 0.85rem;
 }
 
+/* Printable map dialog */
+
+.map-pdf-dialog {
+  width: min(28rem, calc(100% - 2rem));
+}
+
+.map-pdf-dialog > p {
+  margin: 0.6rem 0;
+  font-size: 0.9rem;
+}
+
+.map-pdf-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin: 0.75rem 0;
+  padding: 0.5rem 0.75rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.map-pdf-choice legend {
+  padding: 0 0.3rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.map-pdf-choice label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.map-pdf-field {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.75rem 0;
+  font-size: 0.9rem;
+}
+
+.map-pdf-field span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.map-pdf-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
 /* Notes sheet: a page to edit in place and print, and the players' handout. */
 
 .sheet-main {

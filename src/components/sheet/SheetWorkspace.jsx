@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import MapPdfButton from '../print/MapPdfButton.jsx'
 import { setSheet } from '../../model/edit.js'
 import { handoutHref } from '../../routing.js'
 import { encodeShare } from '../../storage/share.js'
@@ -71,6 +72,7 @@ export default function SheetWorkspace({ dungeon, onChange }) {
         )}
         <span className="sheet-toolbar-gap" />
         <HandoutLinkButton dungeon={dungeon} />
+        <MapPdfButton dungeon={dungeon} audience={audience} />
         <button type="button" className="primary" onClick={() => window.print()} title="Print this sheet, or save it as a PDF">
           Print
         </button>
