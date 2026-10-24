@@ -25,6 +25,8 @@ function checkNamed(thing, types, where, codePrefix, problems, ids) {
     problems.push(problem('warning', `unknown${codePrefix}Type`, `${where} has an unknown type "${thing?.type}".`, ids))
   } else if (thing.type === 'item' && !thing.name) {
     problems.push(problem('warning', `${codePrefix.toLowerCase()}MissingItemName`, `${where} needs an item name.`, ids))
+  } else if (thing.type === 'custom' && !thing.name) {
+    problems.push(problem('warning', `${codePrefix.toLowerCase()}MissingName`, `${where} is custom and needs a name.`, ids))
   }
 }
 

@@ -1,15 +1,19 @@
 // The parts of a dungeon the solver needs, indexed for fast lookup. Pure, like
 // the rest of the solver. Geometry, labels, floors, and edge kinds are dropped.
 
+import { SOLVER_CONTENT_TYPES } from '../model/dungeon.js'
+
 /**
  * @param {import('../model/dungeon.js').Dungeon} dungeon
  * @param {string} [without] a room to leave out, with its edges, for the
  *   optional-room check
  */
 export function buildGraph(dungeon, without) {
+  // Only keys and items matter. The game master's contents (treasure, enemies,
+  // and the like) never open anything, so they're left out.
   const contents = new Map()
   for (const room of dungeon.rooms) {
-    if (room.id !== without) contents.set(room.id, room.contents)
+    if (room.id !== without) contents.set(room.id, room.contents.filter((c) => SOLVER_CONTENT_TYPES.includes(c.type)))
   }
 
   // Edges by the rooms they can be walked from. Two-way edges appear under

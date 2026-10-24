@@ -1,4 +1,5 @@
-import { CONTENT_TYPES, EDGE_KINDS, GATE_TYPES, NOTE_FIELDS } from '../../model/dungeon.js'
+import { useState } from 'react'
+import { EDGE_KINDS, GATE_TYPES, NOTE_CONTENT_TYPES, NOTE_FIELDS, SOLVER_CONTENT_TYPES } from '../../model/dungeon.js'
 import {
   addFloor,
   itemNames,
@@ -13,10 +14,14 @@ import {
   setRoomNote,
   updateEdge,
   updateRoom,
+  withContentEmoji,
+  withContentName,
+  withContentType,
 } from '../../model/edit.js'
+import ContentIcon from '../icons/ContentIcon.jsx'
 import Icon from '../icons/Icon.jsx'
-import { contentIconName, gateIconName, passageIconName } from '../icons/icons.js'
-import { CONTENT_LABELS, GATE_LABELS, KIND_LABELS, NOTE_LABELS } from '../labels.js'
+import { EMOJI_CHOICES, contentIcon, gateIconName, passageIconName } from '../icons/icons.js'
+import { CONTENT_LABELS, CONTENT_NAME_HINTS, GATE_LABELS, KIND_LABELS, NOTE_LABELS } from '../labels.js'
 
 const ITEM_LIST_ID = 'known-items'
 
@@ -52,6 +57,92 @@ function ItemNameInput({ value, onChange, label = 'Item name' }) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
     />
+  )
+}
+
+// The content types in a dropdown: the ones the check counts, then the rest.
+function ContentTypeOptions() {
+  return (
+    <>
+      <optgroup label="Opens the way">
+        {SOLVER_CONTENT_TYPES.map((t) => (
+          <option key={t} value={t}>{CONTENT_LABELS[t]}</option>
+        ))}
+      </optgroup>
+      <optgroup label="For your notes">
+        {NOTE_CONTENT_TYPES.map((t) => (
+          <option key={t} value={t}>{CONTENT_LABELS[t]}</option>
+        ))}
+      </optgroup>
+    </>
+  )
+}
+
+// One thing in a room: its icon (click to pick an emoji instead), its type,
+// and its name when it has one.
+function ContentRow({ content, onChange, onRemove }) {
+  const [picking, setPicking] = useState(false)
+  const named = content.type !== 'smallKey' && content.type !== 'bigKey'
+  return (
+    <div className="content-item">
+      <div className="content-row thing-row">
+        <button
+          type="button"
+          className={`icon icon-pick${picking ? ' open' : ''}`}
+          aria-label="Change icon"
+          aria-expanded={picking}
+          title="Change icon"
+          onClick={() => setPicking(!picking)}
+        >
+          <ContentIcon content={content} size={22} />
+        </button>
+        <select aria-label="Content type" value={content.type} onChange={(e) => onChange(withContentType(content, e.target.value))}>
+          <ContentTypeOptions />
+        </select>
+        {named &&
+          (content.type === 'item' ? (
+            <ItemNameInput value={content.name} onChange={(name) => onChange(withContentName(content, name))} />
+          ) : (
+            <input
+              className="item-name"
+              aria-label={content.type === 'custom' ? 'Name' : 'Details'}
+              placeholder={CONTENT_NAME_HINTS[content.type]}
+              value={content.name ?? ''}
+              onChange={(e) => onChange(withContentName(content, e.target.value))}
+            />
+          ))}
+        <button type="button" className="icon" aria-label="Remove" title="Remove" onClick={onRemove}>
+          ×
+        </button>
+      </div>
+      {picking && <EmojiPicker content={content} onPick={(emoji) => onChange(withContentEmoji(content, emoji))} />}
+    </div>
+  )
+}
+
+// Picks a content's icon: the default (the drawn art, when there is one) or
+// any emoji, from the list or typed in.
+function EmojiPicker({ content, onPick }) {
+  const fallback = { type: content.type }
+  const hasArt = contentIcon(fallback)?.name
+  return (
+    <div className="emoji-picker" role="group" aria-label="Icon">
+      <button type="button" className={`emoji-default${content.emoji ? '' : ' chosen'}`} aria-pressed={!content.emoji} onClick={() => onPick(null)}>
+        <ContentIcon content={fallback} size={20} /> {hasArt ? 'Drawn art' : 'Default'}
+      </button>
+      <div className="emoji-grid">
+        {EMOJI_CHOICES.map((emoji) => (
+          <button key={emoji} type="button" className={`emoji-choice${content.emoji === emoji ? ' chosen' : ''}`} aria-pressed={content.emoji === emoji} aria-label={emoji} onClick={() => onPick(emoji)}>
+            {emoji}
+          </button>
+        ))}
+      </div>
+      <label className="emoji-own">
+        <span>Or type any emoji</span>
+        {/* The newest character typed wins, so typing over the old emoji works. */}
+        <input value={content.emoji ?? ''} placeholder="🙂" onChange={(e) => onPick([...new Intl.Segmenter().segment(e.target.value.trim())].at(-1)?.segment ?? null)} />
+      </label>
+    </div>
   )
 }
 
@@ -95,38 +186,32 @@ function RoomPanel({ room, dungeon, onChange, onSelect }) {
         <legend>Contents</legend>
         {room.contents.length === 0 && <p className="muted">Nothing here.</p>}
         {room.contents.map((c, i) => (
-          <div className="content-row" key={i}>
-            <Icon name={contentIconName(c)} size={22} />
-            <select
-              aria-label="Content type"
-              value={c.type}
-              onChange={(e) => setContents(room.contents.with(i, withType(c, e.target.value)))}
-            >
-              {CONTENT_TYPES.map((t) => (
-                <option key={t} value={t}>{CONTENT_LABELS[t]}</option>
-              ))}
-            </select>
-            {c.type === 'item' && (
-              <ItemNameInput value={c.name} onChange={(name) => setContents(room.contents.with(i, { ...c, name }))} />
-            )}
-            <button
-              type="button"
-              className="icon"
-              aria-label="Remove"
-              title="Remove"
-              onClick={() => setContents(room.contents.toSpliced(i, 1))}
-            >
-              ×
-            </button>
-          </div>
+          <ContentRow
+            key={i}
+            content={c}
+            onChange={(next) => setContents(room.contents.with(i, next))}
+            onRemove={() => setContents(room.contents.toSpliced(i, 1))}
+          />
         ))}
         <div className="add-contents">
-          {CONTENT_TYPES.map((t) => (
-            <button key={t} type="button" className="with-icon" onClick={() => setContents([...room.contents, withType({}, t)])}>
-              + <Icon name={contentIconName({ type: t })} size={16} /> {CONTENT_LABELS[t]}
+          {SOLVER_CONTENT_TYPES.map((t) => (
+            <button key={t} type="button" className="with-icon" onClick={() => setContents([...room.contents, withContentType({}, t)])}>
+              + <ContentIcon content={{ type: t }} /> {CONTENT_LABELS[t]}
             </button>
           ))}
+          <select
+            aria-label="Add something else"
+            className="add-more"
+            value=""
+            onChange={(e) => e.target.value && setContents([...room.contents, withContentType({}, e.target.value)])}
+          >
+            <option value="">+ More…</option>
+            {NOTE_CONTENT_TYPES.map((t) => (
+              <option key={t} value={t}>{CONTENT_LABELS[t]}</option>
+            ))}
+          </select>
         </div>
+        <p className="muted hint">Keys and items open the way, so the check counts them. The rest are for your notes and never lock anything.</p>
       </fieldset>
       <PuzzleNote room={room} dungeon={dungeon} onSelect={onSelect} />
       <RoomNotes room={room} onChange={onChange} />

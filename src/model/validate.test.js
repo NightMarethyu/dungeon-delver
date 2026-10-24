@@ -41,6 +41,7 @@ describe('validateDungeon', () => {
     ['a puzzle in a room the edge does not connect', (d) => (d.edges[0].gate = { type: 'puzzle', at: 'zz' }), { severity: 'warning', code: 'puzzleRoomNotOnEdge', ids: ['e1'] }],
     ['an unknown content type', (d) => (d.rooms[0].contents = [{ type: 'rupee' }]), { severity: 'warning', code: 'unknownContentType', ids: ['a'] }],
     ['an item with no name', (d) => (d.rooms[0].contents = [{ type: 'item' }]), { severity: 'warning', code: 'contentMissingItemName', ids: ['a'] }],
+    ['a custom thing with no name', (d) => (d.rooms[0].contents = [{ type: 'custom' }]), { severity: 'warning', code: 'contentMissingName', ids: ['a'] }],
     ['an invalid rect', (d) => (d.rooms[0].rect = { x: 0, y: 0, w: 0, h: 2 }), { severity: 'warning', code: 'invalidRect', ids: ['a'] }],
     ['an invalid graph position', (d) => (d.rooms[0].graphPos = { x: 1, y: 'up' }), { severity: 'warning', code: 'invalidGraphPos', ids: ['a'] }],
   ])('reports %s', (_, change, expected) => {

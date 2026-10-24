@@ -4,7 +4,28 @@
 
 export const KIND_LABELS = { door: 'Door', stairs: 'Stairs', drop: 'Drop', passage: 'Passage' }
 export const GATE_LABELS = { open: 'Open', smallKey: 'Small key', bigKey: 'Big key', item: 'Needs item', puzzle: 'Puzzle' }
-export const CONTENT_LABELS = { smallKey: 'Small key', bigKey: 'Big key', item: 'Item' }
+export const CONTENT_LABELS = {
+  smallKey: 'Small key',
+  bigKey: 'Big key',
+  item: 'Item',
+  treasure: 'Treasure',
+  enemy: 'Enemy',
+  trap: 'Trap',
+  puzzle: 'Puzzle',
+  npc: 'Character',
+  custom: 'Custom',
+}
+// Hints for a content's name box. An item's name must match the gate it
+// opens; for the rest it's whatever the game master wants to see.
+export const CONTENT_NAME_HINTS = {
+  item: 'e.g. hookshot',
+  treasure: 'e.g. 50 gold',
+  enemy: 'e.g. 3 goblins',
+  trap: 'e.g. pit trap',
+  puzzle: 'e.g. statue riddle',
+  npc: 'e.g. the ferryman',
+  custom: 'Name it, e.g. altar',
+}
 
 // A room's note fields: the label, and a hint shown in the empty box. Kept
 // system-neutral so any game's stats or rules can go in them.
@@ -22,10 +43,19 @@ export const NOTE_LABELS = {
 export const ROLE_TAGS = { start: '▶ Start', goal: '★ Goal' }
 export const MARK_TAGS = { optional: 'Optional', unreachable: 'Unreachable', stuck: 'Stuck' }
 
-// Short text for a room's contents or an edge's gate, like "Small key" or
-// "hookshot". Open gates have no text.
+// Short text for a room's contents or an edge's gate, like "Small key",
+// "hookshot", or "3 goblins". Open gates have no text.
 export function thingText(thing) {
   if (!thing || thing.type === 'open') return ''
   if (thing.type === 'item') return thing.name || 'item?'
+  if (thing.type === 'custom') return thing.name || 'custom?'
+  if (thing.name) return thing.name
   return GATE_LABELS[thing.type] ?? CONTENT_LABELS[thing.type] ?? thing.type
+}
+
+// A room content's full description for a tooltip, like "Enemy: 3 goblins".
+export function contentTitle(content) {
+  const label = CONTENT_LABELS[content.type] ?? content.type
+  if (content.type === 'custom') return thingText(content)
+  return content.name ? `${label}: ${content.name}` : label
 }

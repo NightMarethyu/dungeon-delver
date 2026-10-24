@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { CONTENT_TYPES, GATE_TYPES } from '../../model/dungeon.js'
-import { CONTENT_ICONS, GATE_ICONS, ICONS, passageIconName, puzzleRooms } from './icons.js'
+import { CONTENT_EMOJI, CONTENT_ICONS, EMOJI_CHOICES, GATE_ICONS, ICONS, contentIcon, passageIconName, puzzleRooms } from './icons.js'
 import { parseIcon, UNSUPPORTED_SHAPES } from './parse.js'
 
 const dir = new URL('../../assets/icons/', import.meta.url)
@@ -43,9 +43,29 @@ describe.each(drawings)('the %s drawing', (name, svg) => {
 })
 
 describe('icon choices', () => {
-  it('every gate and content type has a drawn icon', () => {
+  it('every gate has a drawn icon', () => {
     expect(GATE_TYPES.map((t) => GATE_ICONS[t]).filter((n) => !ICONS[n])).toEqual([])
-    expect(CONTENT_TYPES.map((t) => CONTENT_ICONS[t]).filter((n) => !ICONS[n])).toEqual([])
+  })
+
+  it('every content type has a drawn icon or, failing that, an emoji', () => {
+    expect(Object.values(CONTENT_ICONS).filter((n) => !ICONS[n])).toEqual([])
+    expect(CONTENT_TYPES.filter((t) => !CONTENT_ICONS[t] && !CONTENT_EMOJI[t])).toEqual([])
+  })
+
+  it('keeps the drawn art for keys and items', () => {
+    expect(contentIcon({ type: 'smallKey' })).toEqual({ name: 'key' })
+    expect(contentIcon({ type: 'bigKey' })).toEqual({ name: 'big_key' })
+    expect(contentIcon({ type: 'item', name: 'hookshot' })).toEqual({ name: 'chest' })
+  })
+
+  it("uses a content's own emoji over its drawn icon", () => {
+    expect(contentIcon({ type: 'smallKey', emoji: '🗝️' })).toEqual({ emoji: '🗝️' })
+    expect(contentIcon({ type: 'enemy' })).toEqual({ emoji: CONTENT_EMOJI.enemy })
+    expect(contentIcon({ type: 'nope' })).toBeNull()
+  })
+
+  it('offers each emoji once', () => {
+    expect(new Set(EMOJI_CHOICES).size).toBe(EMOJI_CHOICES.length)
   })
 })
 
