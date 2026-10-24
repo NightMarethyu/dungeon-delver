@@ -23,6 +23,19 @@ const solveRooms = (...args) => solve(dungeon(...args).d)
 const softlockEdges = (result) => result.softlocks.map((s) => s.choices.map((c) => c.edge))
 
 describe('solve', () => {
+  it("ignores the game master's contents: they never open or lock anything", () => {
+    const rooms = { start: [KEY], side: [], goal: [] }
+    const edges = [
+      ['walk', 'start', 'side'],
+      ['waste', 'start', 'side', KEY],
+      ['bossDoor', 'side', 'goal', KEY],
+    ]
+    const notes = [{ type: 'enemy', name: '3 goblins', emoji: '👹' }, { type: 'treasure' }, { type: 'custom', name: 'smallKey' }, { type: 'puzzle' }]
+    const plain = solveRooms(rooms, edges)
+    const withNotes = solveRooms({ start: [KEY, ...notes], side: notes, goal: [{ type: 'trap' }] }, edges)
+    expect(withNotes).toEqual(plain)
+  })
+
   it('counts spending a key on a door whose two sides are already connected as a softlock', () => {
     const result = solveRooms(
       { start: [KEY], side: [], goal: [] },

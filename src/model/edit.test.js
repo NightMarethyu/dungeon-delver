@@ -4,6 +4,7 @@ import {
   addEdge,
   addFloor,
   addRoom,
+  firstEmoji,
   itemNames,
   moveFloor,
   nextId,
@@ -13,6 +14,9 @@ import {
   renameFloor,
   reverseEdge,
   setEndpoint,
+  withContentEmoji,
+  withContentName,
+  withContentType,
   updateEdge,
   setRoomNote,
   updateRoom,
@@ -106,6 +110,35 @@ describe('edges', () => {
     d = reverseEdge(d, 'e1')
     expect(d.edges[0]).toMatchObject({ from: 'b', to: 'a' })
     expect(removeEdge(d, 'e1').edges).toEqual([])
+  })
+})
+
+describe('room contents', () => {
+  it('keeps the name when changing type, unless the new type is a key', () => {
+    const goblins = { type: 'enemy', name: '3 goblins', emoji: '👹' }
+    expect(withContentType(goblins, 'trap')).toEqual({ type: 'trap', name: '3 goblins' })
+    expect(withContentType(goblins, 'smallKey')).toEqual({ type: 'smallKey' })
+    expect(withContentType({ type: 'bigKey' }, 'custom')).toEqual({ type: 'custom', name: '' })
+    expect(withContentType({ type: 'bigKey' }, 'treasure')).toEqual({ type: 'treasure' })
+  })
+
+  it('drops an empty name, except from an item or custom thing', () => {
+    expect(withContentName({ type: 'enemy', name: 'Bat' }, '')).toEqual({ type: 'enemy' })
+    expect(withContentName({ type: 'custom', name: 'Altar' }, '')).toEqual({ type: 'custom', name: '' })
+    expect(withContentName({ type: 'treasure' }, '50 gold')).toEqual({ type: 'treasure', name: '50 gold' })
+  })
+
+  it('sets and clears an emoji icon', () => {
+    expect(withContentEmoji({ type: 'smallKey' }, '🗝️')).toEqual({ type: 'smallKey', emoji: '🗝️' })
+    expect(withContentEmoji({ type: 'smallKey', emoji: '🗝️' }, null)).toEqual({ type: 'smallKey' })
+    expect(withContentEmoji({ type: 'smallKey', emoji: '🗝️' }, '  ')).toEqual({ type: 'smallKey' })
+  })
+
+  it('takes one whole character as an emoji', () => {
+    expect(firstEmoji('🧙‍♀️ wizard')).toBe('🧙‍♀️')
+    expect(firstEmoji('🇳🇴')).toBe('🇳🇴')
+    expect(firstEmoji('')).toBeNull()
+    expect(firstEmoji(undefined)).toBeNull()
   })
 })
 

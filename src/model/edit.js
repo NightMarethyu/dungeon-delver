@@ -90,6 +90,42 @@ export function removeEdge(dungeon, id) {
   return { ...dungeon, edges: dungeon.edges.filter((e) => e.id !== id) }
 }
 
+// The first character the user typed, as the icon for a room's content. One
+// character as the eye sees it, so an emoji built from several code points
+// (like 🧙‍♀️ or a flag) stays whole. Null when there is none.
+export function firstEmoji(text) {
+  if (typeof text !== 'string') return null
+  const trimmed = text.trim()
+  if (!trimmed) return null
+  const [first] = new Intl.Segmenter().segment(trimmed)
+  return first.segment
+}
+
+// A room's content changed to another type. Its name is kept when the new type
+// can have one (keys can't), and an item or custom thing always gets one. Its
+// emoji is dropped, since it was picked for the old type.
+export function withContentType(content, type) {
+  if (type === 'smallKey' || type === 'bigKey') return { type }
+  if (type === 'item' || type === 'custom') return { type, name: content.name ?? '' }
+  return content.name ? { type, name: content.name } : { type }
+}
+
+// A room's content renamed. An item or custom thing keeps an empty name, so its
+// box stays; other contents drop it.
+export function withContentName(content, name) {
+  if (name || content.type === 'item' || content.type === 'custom') return { ...content, name }
+  const { name: _old, ...rest } = content
+  return rest
+}
+
+// A room's content with its icon set to an emoji, or back to the default with
+// null (or anything that isn't one).
+export function withContentEmoji(content, emoji) {
+  const { emoji: _old, ...rest } = content
+  const kept = firstEmoji(emoji)
+  return kept ? { ...rest, emoji: kept } : rest
+}
+
 // Every item name used in the dungeon, in rooms or on gates, sorted.
 export function itemNames(dungeon) {
   const names = new Set()

@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "name": "Mossy Hollow",
   "floors": [
     {
@@ -30,7 +30,12 @@
         "x": 220,
         "y": 280
       },
-      "contents": []
+      "contents": [
+        {
+          "type": "enemy",
+          "name": "2 moss slimes"
+        }
+      ]
     },
     {
       "id": "cellar",
@@ -54,7 +59,13 @@
         "x": 220,
         "y": 140
       },
-      "contents": []
+      "contents": [
+        {
+          "type": "custom",
+          "name": "Healing fountain",
+          "emoji": "⛲"
+        }
+      ]
     },
     {
       "id": "gallery",
@@ -88,7 +99,17 @@
         "x": 660,
         "y": 140
       },
-      "contents": []
+      "contents": [
+        {
+          "type": "enemy",
+          "name": "Thornback",
+          "emoji": "🐉"
+        },
+        {
+          "type": "treasure",
+          "name": "Heart container"
+        }
+      ]
     }
   ],
   "edges": [

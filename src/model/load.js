@@ -5,6 +5,7 @@
 // can't be read as a dungeon at all, dungeon is null and problems explains why.
 
 import { CURRENT_VERSION, NOTE_FIELDS } from './dungeon.js'
+import { firstEmoji } from './edit.js'
 import { validateDungeon } from './validate.js'
 
 // MIGRATIONS[n] turns a version n dungeon into version n + 1.
@@ -16,6 +17,9 @@ const MIGRATIONS = {
   2: (raw) => raw,
   // Version 4 added the optional rooms[].notes. Nothing to change.
   3: (raw) => raw,
+  // Version 5 added the game master's content types and the optional
+  // contents[].emoji. Nothing to change.
+  4: (raw) => raw,
 }
 
 const fatal = (code, message) => ({
@@ -32,6 +36,13 @@ function normalizeNotes(notes) {
   return Object.keys(kept).length > 0 ? kept : undefined
 }
 
+// A copy of a room's content, keeping its emoji only when it is one.
+function normalizeContent(content) {
+  const { emoji, ...rest } = content ?? {}
+  const kept = firstEmoji(emoji)
+  return kept ? { ...rest, emoji: kept } : rest
+}
+
 function normalize(raw) {
   return {
     version: CURRENT_VERSION,
@@ -42,7 +53,7 @@ function normalize(raw) {
         id: String(r.id),
         floor: r.floor,
         label: r.label ?? String(r.id),
-        contents: asArray(r.contents).map((c) => ({ ...c })),
+        contents: asArray(r.contents).map(normalizeContent),
       }
       if (r.rect !== undefined) room.rect = { ...r.rect }
       if (r.graphPos !== undefined) room.graphPos = { ...r.graphPos }

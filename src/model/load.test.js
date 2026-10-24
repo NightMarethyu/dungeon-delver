@@ -41,6 +41,12 @@ describe('loadDungeon', () => {
     expect('notes' in dungeon.rooms[1]).toBe(false)
   })
 
+  it("keeps a content's emoji only when it is one", () => {
+    const contents = [{ type: 'enemy', name: 'Bat', emoji: '🦇' }, { type: 'smallKey', emoji: '' }, { type: 'trap', emoji: 5 }, { type: 'npc', emoji: ' 🧙‍♀️🧝 ' }]
+    const { dungeon } = loadDungeon({ ...minimal, rooms: [{ ...minimal.rooms[0], contents }, minimal.rooms[1]] })
+    expect(dungeon.rooms[0].contents).toEqual([{ type: 'enemy', name: 'Bat', emoji: '🦇' }, { type: 'smallKey' }, { type: 'trap' }, { type: 'npc', emoji: '🧙‍♀️' }])
+  })
+
   it.each([[{}], [{ treasure: '' }], ['just a string'], [null]])('leaves out notes with no text: %j', (notes) => {
     const { dungeon } = loadDungeon({ ...minimal, rooms: [{ ...minimal.rooms[0], notes }, minimal.rooms[1]] })
     expect('notes' in dungeon.rooms[0]).toBe(false)

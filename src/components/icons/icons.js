@@ -11,14 +11,35 @@ export const ICONS = Object.fromEntries(
   Object.entries(files).map(([path, svg]) => [path.match(/([^/]+)\.svg$/)[1], parseIcon(svg)]),
 )
 
-// What a room can hold.
-export const CONTENT_ICONS = { smallKey: 'key', bigKey: 'big_key', item: 'chest' }
+// What a room can hold. The drawn icons come first; a type with no drawing
+// yet falls back to an emoji. Any content can swap its icon for an emoji the
+// user picks (its `emoji`).
+export const CONTENT_ICONS = { smallKey: 'key', bigKey: 'big_key', item: 'chest', treasure: 'chest', puzzle: 'puzzle' }
+export const CONTENT_EMOJI = { enemy: '👹', trap: '🪤', npc: '🧑', custom: '⭐' }
+
+// Emoji offered when picking a content's icon. Any other can be typed in.
+export const EMOJI_CHOICES = [
+  '🗝️', '💰', '💎', '👑', '🗡️', '🛡️', '🏹', '🪄', '📜', '🧪', '🍖', '🪙',
+  '👹', '💀', '🐉', '🕷️', '🐀', '🧟', '👻', '🦇', '🐍', '🧌',
+  '🧙', '🧝', '🧑', '👸', '🤴', '🧞',
+  '🪤', '🔥', '⚡', '🕳️', '🧩', '🗿', '⚰️', '🕯️', '📖', '⛲', '🚪', '⭐', '❓', '❗',
+]
 // What locks a connection. Open connections use the plain door.
 export const GATE_ICONS = { open: 'door', smallKey: 'door_locked', bigKey: 'big_key_door', item: 'item_pouch', puzzle: 'puzzle' }
 
 // The icon for a gate or a room's contents.
 export const gateIconName = (gate) => GATE_ICONS[gate?.type] ?? null
 export const contentIconName = (content) => CONTENT_ICONS[content?.type] ?? null
+
+// How to draw a room's content: { emoji } for the user's pick or a type with
+// no drawing, otherwise { name } of the drawn icon. Null for an unknown type.
+export function contentIcon(content) {
+  if (content?.emoji) return { emoji: content.emoji }
+  const name = contentIconName(content)
+  if (name) return { name }
+  const emoji = CONTENT_EMOJI[content?.type]
+  return emoji ? { emoji } : null
+}
 
 // The icon for a connection's way between floors: a hole for a drop, and
 // stairs for anything else that changes floor (or is marked as stairs). The

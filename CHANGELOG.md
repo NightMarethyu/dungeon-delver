@@ -9,6 +9,8 @@ The first step toward a dungeon builder for tabletop RPGs.
 ### Added
 
 - **Room notes for the game master** (format version 4). Each room has boxes for its description, enemies, traps and hazards, treasure, and hidden details, plus a plain notes box for everything else. They're free text, not tied to any game system, so they fit whatever game you run. Notes are kept in saves, share links, and JSON exports, and the Sunken Cistern example has a few to show how they look.
+- **More things to put in a room** (format version 5). Alongside small keys, the big key, and items, the Contents box now offers treasure, enemies, traps, puzzles, characters, and **custom**, which you name yourself. Each can take a detail, like "50 gold" or "3 goblins". They're for the game master: the solver ignores them, so they never change whether a dungeon can be beaten. The Mossy Hollow example has a few.
+- **Emoji icons.** Click the icon beside anything in a room to pick an emoji for it instead, from a list or by typing any emoji. The drawn icons stay the default, and **Default** puts one back.
 
 ## 1.1 (2026-10-23)
 

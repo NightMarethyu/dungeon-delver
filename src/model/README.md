@@ -8,11 +8,11 @@ The JSDoc types are in [`dungeon.js`](dungeon.js). Load saved or shared JSON wit
 
 ```json
 {
-  "version": 4,
+  "version": 5,
   "name": "Example Dungeon",
   "floors": [{ "id": "1F", "name": "Ground Floor" }],
   "rooms": [
-    { "id": "r1", "floor": "1F", "label": "Entrance", "notes": { "description": "A mossy arch.", "traps": "Loose flagstone by the door." }, "contents": [{ "type": "smallKey" }] },
+    { "id": "r1", "floor": "1F", "label": "Entrance", "notes": { "description": "A mossy arch.", "traps": "Loose flagstone by the door." }, "contents": [{ "type": "smallKey" }, { "type": "enemy", "name": "2 bats", "emoji": "🦇" }] },
     { "id": "r2", "floor": "1F", "label": "Chest Room", "rect": { "x": 4, "y": 0, "w": 4, "h": 3 }, "contents": [{ "type": "item", "name": "hookshot" }] }
   ],
   "edges": [
@@ -34,6 +34,8 @@ The JSDoc types are in [`dungeon.js`](dungeon.js). Load saved or shared JSON wit
 | `rooms[].rect` | `{ x, y, w, h }` in grid units. Only the map view uses it. Optional. | Left out |
 | `rooms[].graphPos` | `{ x, y }` in pixels. Only the graph editor uses it; rooms without one are laid out on a grid. Optional. Added in version 2. | Left out |
 | `rooms[].notes` | The game master's notes: `{ description?, enemies?, traps?, treasure?, secrets?, other? }`, each free text. Not tied to any game system, and the solver ignores them. Empty notes are left out, and so is `notes` when every one is empty. Added in version 4. | Left out; unknown fields and non-text values are dropped |
+| `rooms[].contents[]` | What the room holds: `{ type, name?, emoji? }`. See the rules below for the types. | `[]` |
+| `rooms[].contents[].emoji` | One emoji (or any single character) shown instead of the content's icon. Optional. Added in version 5. | Left out; kept only when it's a non-empty string, cut to its first character |
 | `edges[]` | `{ id, from, to, kind, gate, oneWay }`. | `kind` = `"door"`, `gate` = open, `oneWay` = `false` |
 | `start`, `goal` | Room ids. | `null` |
 
@@ -47,7 +49,9 @@ The JSDoc types are in [`dungeon.js`](dungeon.js). Load saved or shared JSON wit
   - `bigKey`: passable while holding the big key. Never used up.
   - `item`: passable while holding the item named by `name`. Never used up.
   - `puzzle`: opened by solving a puzzle in the room named by `at`, which must be one of the edge's two rooms. The player solves it on reaching that room (it costs nothing), and it then stays open from both sides. From the other side it stays shut until then, like a shutter door opened by a switch. With no `at`, the puzzle is on the door itself and can be solved from either side, so it never blocks the player. Added in version 3.
-- **Contents** are `smallKey`, `bigKey`, or `item` with a `name`. They're collected on entering the room.
+- **Contents** come in two groups:
+  - What the solver counts: `smallKey`, `bigKey`, or `item` with a `name`. They're collected on entering the room.
+  - What the game master notes: `treasure`, `enemy`, `trap`, `puzzle`, `npc` (shown as "Character"), and `custom`. Each may have a `name` for its detail ("3 goblins"), and `custom` needs one, since the name is all it is. The solver ignores them: they never lock or open anything. A `puzzle` here is only a note; a puzzle that opens a connection is a puzzle gate. Added in version 5.
 - Gate and content types are data, not hardcoded rules, so a later TTRPG mode can rename them.
 
 ## Data problems
@@ -70,3 +74,4 @@ Each problem is `{ severity, code, message, ids }`. `ids` lists the rooms, edges
 | `unknownGateType`, `gateMissingItemName` | warning | An edge's gate is unknown, or an item gate has no item name |
 | `puzzleRoomNotOnEdge` | warning | A puzzle gate's `at` names a room the edge doesn't connect; it's read as solvable from either side |
 | `unknownContentType`, `contentMissingItemName` | warning | A room holds something unknown, or an item with no name |
+| `contentMissingName` | warning | A room holds a custom thing with no name |
