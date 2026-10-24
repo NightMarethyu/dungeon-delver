@@ -5,6 +5,7 @@ import Playback from '../components/panels/Playback.jsx'
 import ResultsBanner from '../components/panels/ResultsBanner.jsx'
 import ShortcutsDialog from '../components/panels/ShortcutsDialog.jsx'
 import SidePanel from '../components/panels/SidePanel.jsx'
+import MapPdfButton from '../components/print/MapPdfButton.jsx'
 import SheetWorkspace from '../components/sheet/SheetWorkspace.jsx'
 import ThemeToggle from '../components/ThemeToggle.jsx'
 import { pathEdges, playbackMarks, roomMarks } from '../components/results.js'
@@ -404,6 +405,8 @@ function Editor({ id, initial, shared = false, example = false }) {
             <button type="button" onClick={() => downloadText(exportFileName(dungeon), exportJson(dungeon))} title="Download this dungeon as a JSON file">
               Export JSON
             </button>
+            {/* The Sheet view has its own, for the game master or the players. */}
+            {view !== 'sheet' && <MapPdfButton dungeon={dungeon} />}
             <button type="button" className="icon shortcuts-button" onClick={() => setHelpOpen(true)} aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
               ?
             </button>

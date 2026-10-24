@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import MapPdfButton from '../components/print/MapPdfButton.jsx'
 import Sheet from '../components/sheet/Sheet.jsx'
 import ThemeToggle from '../components/ThemeToggle.jsx'
 import { HOME_HREF } from '../routing.js'
@@ -28,6 +29,7 @@ export default function Handout({ data }) {
         </a>
         <h1>Player handout</h1>
         <div className="header-actions">
+          <MapPdfButton dungeon={dungeon} audience="players" />
           <button type="button" className="primary" onClick={() => window.print()} title="Print this handout, or save it as a PDF">
             Print
           </button>

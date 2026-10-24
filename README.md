@@ -23,6 +23,7 @@ It's a static site on GitHub Pages, with no accounts and no server: dungeons are
 - **Room notes for the game master.** Each room has boxes for its description, enemies, traps and hazards, treasure, and hidden details, plus a plain notes box for anything else. They're free text and not tied to any game system, so stat blocks, DCs, or rolls from whatever game you run all fit. They travel with the dungeon in saves and share links.
 - **A notes sheet to run the game from.** Switch to **Sheet** for a page with a small map of each floor, its rooms labeled 1, 2, 3 (or A, B, C), and each room's notes listed beside its label in order. Type right on the page; what you see is what prints, or saves as a PDF. Rooms are listed from the entrance outward, and the arrows reorder them.
 - **Player handouts.** Every room and every note on the sheet has an eye that picks whether the players see it. Hide a secret room and it's gone from their map too. The **Players** tab shows the handout as they'll get it, ready to print, and "Copy players' link" makes a read-only link that holds only what they may see, so the secrets aren't hiding in it.
+- **Printable battle maps.** "Map PDF" downloads each floor at true size for miniatures, with a square grid, hexes, or no grid inside the rooms, one inch to a square. Pick how many inches each square of the map prints at, and Letter or A4. A floor too big for one sheet is split across pages, with an overview of how they tape together, and pages with no rooms on them are left out. The rooms carry the same numbers as the notes sheet, and the players' version leaves out what's hidden from them.
 - **More in a room than keys.** Besides small keys, the big key, and items, a room can hold treasure, enemies, traps, puzzles, characters, or a custom thing you name yourself, each with an optional detail like "3 goblins". These are for the game master: the solver ignores them, so they never lock anything. Any content's icon can be swapped for an emoji, picked from a list or typed in; the drawn icons stay the default.
 - **Puzzle locks.** A connection can be locked by a puzzle solved inside one of its rooms, like a shutter that opens once you solve the room. It opens from that side only, then stays open both ways, so the solver can tell when a drop or a key choice leaves the player on the wrong side. A puzzle on the door itself (like a lockpicking minigame) can be solved from either side.
 - **Or build it as a graph.** Switch from Map to Graph to add, rename, move, and delete rooms as nodes, and drag between them to connect them. The side panel edits a room's contents (small keys, the big key, named items) or a connection's lock (small key, big key, item, puzzle) and kind (door, stairs, drop, passage, one-way). Pick the start and goal rooms, and sort rooms into floors.
@@ -86,7 +87,7 @@ The solver stays the core, but the tool grows from checking Zelda-style dungeons
 - **Room notes** (started): description, enemies, traps, treasure, hidden details, and free notes for each room are in, with a printable notes sheet keyed to a small map. More to come.
 - **Game master and player views** (started): the sheet's player handout hides the rooms and notes the game master picks. Still to come: secret doors, and a player view of the map itself.
 - **Switches and state.** Levers, crystal switches, and water levels that open and close more than one way, as flags in the solver's state.
-- **Map export** as an image or a printable page.
+- **Map export** (started): printable battle maps as PDF are in. Still to come: the map as an image.
 - **A generator** that only produces dungeons that can be beaten without softlocks.
 
 None of this needs a server: it stays a static site with saves in the browser and share links.
@@ -119,6 +120,7 @@ It's built with React 19 and Vite. The graph editor uses [React Flow](https://re
 | `src/components/panels/` | The side panel (selected room or connection, or the dungeon's start, goal, and floors), the solver results banner, and softlock playback |
 | `src/components/results.js` | Turns solver results into banner text, highlights, and playback marks |
 | `src/components/sheet/` | The notes sheet and player handout: room order, keys, and what players see (`sheet.js`), the small map (`SheetMap.jsx`), and the page itself |
+| `src/components/print/` | Printable battle maps: a small PDF writer (`pdf.js`) and the map's pages, grid and tiling (`battleMap.js`) |
 | `src/pages/` | The landing page, the builder, and the read-only player handout |
 | `src/routing.js` | Hash routing (`#/`, `#/edit/<id>`, `#/share/<data>`, `#/handout/<data>`), so every page works on GitHub Pages |
 | `src/storage/` | Saved dungeons in `localStorage`, share links, and JSON export |
