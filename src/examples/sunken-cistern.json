@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "name": "Sunken Cistern",
   "floors": [
     {
@@ -54,7 +54,10 @@
           "type": "item",
           "name": "Rupee Pouch"
         }
-      ]
+      ],
+      "player": {
+        "hidden": true
+      }
     },
     {
       "id": "stairwell",

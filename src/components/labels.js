@@ -38,6 +38,9 @@ export const NOTE_LABELS = {
   other: { label: 'Notes', hint: 'Anything else.' },
 }
 
+// Who a notes sheet is for: the game master's full notes, or the players' handout.
+export const AUDIENCES = { gm: 'Game master', players: 'Players' }
+
 // Tags on a room for its role, and for the solver's highlight where the color
 // alone isn't enough.
 export const ROLE_TAGS = { start: '▶ Start', goal: '★ Goal' }

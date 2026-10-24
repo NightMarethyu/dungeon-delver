@@ -14,6 +14,9 @@ import {
   renameFloor,
   reverseEdge,
   setEndpoint,
+  setPlayerHidden,
+  setPlayerPart,
+  setSheet,
   withContentEmoji,
   withContentName,
   withContentType,
@@ -192,5 +195,28 @@ describe('floors', () => {
   it("won't remove the last floor", () => {
     const d = sample()
     expect(removeFloor(d, '1F')).toBe(d)
+  })
+})
+
+describe('players and the notes sheet', () => {
+  const base = { ...emptyDungeon(), rooms: [{ id: 'r1', floor: '1F', label: 'A', contents: [] }] }
+
+  it('hides a room from the players and shows it again', () => {
+    const hidden = setPlayerHidden(base, 'r1', true)
+    expect(hidden.rooms[0].player).toEqual({ hidden: true })
+    expect(setPlayerHidden(hidden, 'r1', false).rooms[0]).toEqual(base.rooms[0])
+  })
+
+  it('shows and hides parts, dropping a view that matches the default', () => {
+    const more = setPlayerPart(base, 'r1', 'secrets', true)
+    expect(more.rooms[0].player).toEqual({ show: ['description', 'secrets'] })
+    expect(setPlayerPart(more, 'r1', 'secrets', false).rooms[0]).toEqual(base.rooms[0])
+    expect(setPlayerPart(base, 'r1', 'description', false).rooms[0].player).toEqual({ show: [] })
+  })
+
+  it('changes sheet settings, dropping the ones set back to default', () => {
+    const lettered = setSheet(base, { keys: 'letters' })
+    expect(lettered.sheet).toEqual({ keys: 'letters' })
+    expect(setSheet(lettered, { keys: undefined })).toEqual(base)
   })
 })

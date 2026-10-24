@@ -12,6 +12,8 @@ describe('parseHash', () => {
     ['#/scratch', { page: 'scratch' }],
     ['#/share', { page: 'home' }],
     ['#/share/N4Ig+-$x', { page: 'share', data: 'N4Ig+-$x' }],
+    ['#/handout/N4Ig+-$x', { page: 'handout', data: 'N4Ig+-$x' }],
+    ['#/handout', { page: 'home' }],
     ['#/example', { page: 'home' }],
     ['#/example/mossy-hollow', { page: 'example', id: 'mossy-hollow' }],
   ])('reads %j', (hash, route) => {

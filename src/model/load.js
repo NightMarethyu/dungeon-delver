@@ -4,7 +4,7 @@
 // loadDungeon never throws. It returns { dungeon, problems }. If the input
 // can't be read as a dungeon at all, dungeon is null and problems explains why.
 
-import { CURRENT_VERSION, NOTE_FIELDS } from './dungeon.js'
+import { CURRENT_VERSION, KEY_STYLES, NOTE_FIELDS, PLAYER_PARTS } from './dungeon.js'
 import { firstEmoji } from './edit.js'
 import { validateDungeon } from './validate.js'
 
@@ -20,6 +20,9 @@ const MIGRATIONS = {
   // Version 5 added the game master's content types and the optional
   // contents[].emoji. Nothing to change.
   4: (raw) => raw,
+  // Version 6 added the optional rooms[].player and sheet, for the notes
+  // sheet and the players' handout. Nothing to change.
+  5: (raw) => raw,
 }
 
 const fatal = (code, message) => ({
@@ -36,6 +39,23 @@ function normalizeNotes(notes) {
   return Object.keys(kept).length > 0 ? kept : undefined
 }
 
+// What the players see of a room, keeping only what differs from the default.
+function normalizePlayer(player) {
+  if (!player || typeof player !== 'object') return undefined
+  const kept = {}
+  if (player.hidden === true) kept.hidden = true
+  if (Array.isArray(player.show)) kept.show = PLAYER_PARTS.filter((part) => player.show.includes(part))
+  return Object.keys(kept).length > 0 ? kept : undefined
+}
+
+function normalizeSheet(sheet) {
+  if (!sheet || typeof sheet !== 'object') return undefined
+  const kept = {}
+  if (KEY_STYLES.includes(sheet.keys)) kept.keys = sheet.keys
+  if (Array.isArray(sheet.order)) kept.order = [...new Set(sheet.order.map(String))]
+  return Object.keys(kept).length > 0 ? kept : undefined
+}
+
 // A copy of a room's content, keeping its emoji only when it is one.
 function normalizeContent(content) {
   const { emoji, ...rest } = content ?? {}
@@ -44,7 +64,7 @@ function normalizeContent(content) {
 }
 
 function normalize(raw) {
-  return {
+  const dungeon = {
     version: CURRENT_VERSION,
     name: typeof raw.name === 'string' ? raw.name : 'Untitled Dungeon',
     floors: asArray(raw.floors).map((f) => ({ id: String(f.id), name: f.name ?? String(f.id) })),
@@ -59,6 +79,8 @@ function normalize(raw) {
       if (r.graphPos !== undefined) room.graphPos = { ...r.graphPos }
       const notes = normalizeNotes(r.notes)
       if (notes) room.notes = notes
+      const player = normalizePlayer(r.player)
+      if (player) room.player = player
       return room
     }),
     edges: asArray(raw.edges).map((e) => ({
@@ -72,6 +94,9 @@ function normalize(raw) {
     start: raw.start ?? null,
     goal: raw.goal ?? null,
   }
+  const sheet = normalizeSheet(raw.sheet)
+  if (sheet) dungeon.sheet = sheet
+  return dungeon
 }
 
 /**

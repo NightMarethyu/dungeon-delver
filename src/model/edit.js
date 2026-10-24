@@ -2,6 +2,8 @@
 // takes a dungeon and returns a new one, leaving its input unchanged. The
 // editors call these instead of changing the dungeon themselves.
 
+import { DEFAULT_PLAYER_PARTS, PLAYER_PARTS, playerParts } from './dungeon.js'
+
 // The first `${prefix}${n}` that isn't taken, counting from 1.
 export function nextId(prefix, items) {
   const taken = new Set(items.map((item) => item.id))
@@ -46,6 +48,52 @@ export function setRoomNote(dungeon, id, field, text) {
       return room
     }),
   }
+}
+
+// A room with its `player` view changed by `change`, which gets a copy. The
+// view is left out once it says nothing the default doesn't.
+function withPlayer(room, change) {
+  const player = { ...room.player }
+  change(player)
+  if (!player.hidden) delete player.hidden
+  if (player.show && player.show.length === DEFAULT_PLAYER_PARTS.length && player.show.every((p) => DEFAULT_PLAYER_PARTS.includes(p))) {
+    delete player.show
+  }
+  const next = { ...room, player }
+  if (Object.keys(player).length === 0) delete next.player
+  return next
+}
+
+// Hides a room from the players' handout, map and all, or shows it again.
+export function setPlayerHidden(dungeon, id, hidden) {
+  return {
+    ...dungeon,
+    rooms: dungeon.rooms.map((r) => (r.id === id ? withPlayer(r, (p) => (p.hidden = hidden)) : r)),
+  }
+}
+
+// Shows or hides one part of a room (a note, or its contents) on the players' handout.
+export function setPlayerPart(dungeon, id, part, shown) {
+  return {
+    ...dungeon,
+    rooms: dungeon.rooms.map((r) => {
+      if (r.id !== id) return r
+      const show = new Set(playerParts(r))
+      if (shown) show.add(part)
+      else show.delete(part)
+      return withPlayer(r, (p) => (p.show = PLAYER_PARTS.filter((x) => show.has(x))))
+    }),
+  }
+}
+
+// Changes the notes sheet's settings. A setting given as undefined goes back
+// to its default, and `sheet` is left out once every one has.
+export function setSheet(dungeon, patch) {
+  const sheet = { ...dungeon.sheet, ...patch }
+  for (const key of Object.keys(sheet)) if (sheet[key] === undefined) delete sheet[key]
+  const next = { ...dungeon, sheet }
+  if (Object.keys(sheet).length === 0) delete next.sheet
+  return next
 }
 
 // Removes a room along with its connections, and unsets it as start or goal.
