@@ -1,0 +1,267 @@
+/* The roll tables authoring page (dev only). Colors come from index.css. */
+
+.rt-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 16px 3rem;
+}
+
+.rt-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+
+.rt-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.rt-header p {
+  margin: 0.2rem 0 0;
+}
+
+.rt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.rt-status,
+.rt-draft {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.rt-draft {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  border-color: var(--warn);
+}
+
+.rt-body {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 280px;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  align-items: start;
+}
+
+.rt-list,
+.rt-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.rt-list h3 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.rt-list ul,
+.rt-entries,
+.rt-problems,
+.rt-help {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rt-list li button {
+  width: 100%;
+  text-align: left;
+  border-color: transparent;
+  background: none;
+}
+
+.rt-list li button.selected {
+  border-color: var(--accent);
+  background: var(--surface);
+  font-weight: 600;
+}
+
+.rt-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.rt-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.rt-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.rt-fields label .muted {
+  font-weight: 400;
+}
+
+.rt-fields .wide {
+  grid-column: 1 / -1;
+}
+
+.rt-entries-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  align-items: baseline;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.rt-entries-head h2,
+.rt-side h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.rt-entries {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.rt-entry {
+  display: grid;
+  grid-template-columns: 4rem 4rem minmax(0, 1fr) 9rem auto;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.rt-entry.has-problem .rt-text {
+  border-color: var(--bad);
+}
+
+.rt-range {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.rt-row-buttons {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.rt-row-buttons button {
+  padding: 0.2rem 0.45rem;
+}
+
+.rt-bulk {
+  width: 100%;
+}
+
+.rt-bulk summary {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.rt-bulk textarea {
+  width: 100%;
+  box-sizing: border-box;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.rt-try {
+  width: 100%;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}
+
+.rt-rolls {
+  margin: 0.5rem 0 0;
+  padding-left: 1.5rem;
+}
+
+.rt-delete {
+  margin-top: 1rem;
+}
+
+.rt-ok {
+  color: var(--good);
+  margin: 0;
+}
+
+.rt-problems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.rt-problems li {
+  border-left: 3px solid var(--warn);
+  padding-left: 0.5rem;
+}
+
+.rt-problems li.error {
+  border-color: var(--bad);
+}
+
+.rt-problems button.link {
+  color: inherit;
+  text-align: left;
+}
+
+.rt-help {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.rt-loading {
+  padding: 2rem;
+}
+
+@media (max-width: 1000px) {
+  .rt-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rt-list,
+  .rt-side {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+  .rt-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rt-entry {
+    grid-template-columns: 3rem 3.5rem minmax(0, 1fr) auto;
+  }
+
+  .rt-tags {
+    display: none;
+  }
+}

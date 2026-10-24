@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
+    <title>Roll Tables (dev)</title>
+    <script>
+      // Apply a remembered light or dark pick before the page draws (see src/theme.js).
+      try {
+        const theme = localStorage.getItem('dungeon-delver:theme')
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme
+      } catch {
+        // No storage: follow the system setting.
+      }
+    </script>
+  </head>
+  <body>
+    <!-- Dev only: `npm run tables`. The build leaves this page out. -->
+    <div id="root"></div>
+    <script type="module" src="/src/dev/tables/main.jsx"></script>
+  </body>
+</html>
