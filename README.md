@@ -97,6 +97,7 @@ None of this needs a server: it stays a static site with saves in the browser an
 ```sh
 npm install
 npm run dev     # local dev server
+npm run tables  # roll tables authoring page (dev only)
 npm test        # unit tests (Vitest)
 npm run lint    # oxlint
 npm run build   # production build in dist/
@@ -124,6 +125,9 @@ It's built with React 19 and Vite. The graph editor uses [React Flow](https://re
 | `src/pages/` | The landing page, the builder, and the read-only player handout |
 | `src/routing.js` | Hash routing (`#/`, `#/edit/<id>`, `#/share/<data>`, `#/handout/<data>`), so every page works on GitHub Pages |
 | `src/storage/` | Saved dungeons in `localStorage`, share links, and JSON export |
+| `src/tables/` | Roll tables: the format, checks, dice, and rolling. See [its README](src/tables/README.md). |
+| `src/data/roll-tables.json` | The roll tables themselves, written with the authoring page |
+| `src/dev/tables/`, `tables.html` | The roll tables authoring page. Dev only: the build leaves it out. |
 | `src/examples/` | The example dungeons on the front page, with tests that they show what their blurbs promise |
 | `docs/screenshots/` | Screenshots for this README |
 

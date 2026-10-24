@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "tables": [
+    {
+      "id": "sample-treasure",
+      "name": "Sample treasure",
+      "category": "treasure",
+      "description": "A placeholder to show the format. Replace it with your own tables.",
+      "entries": [
+        { "text": "{2d6} coins", "weight": 3 },
+        { "text": "A small gem: [sample-gem]" }
+      ]
+    },
+    {
+      "id": "sample-gem",
+      "name": "Sample gem",
+      "category": "other",
+      "entries": [
+        { "text": "Red stone" },
+        { "text": "Blue stone" }
+      ]
+    }
+  ]
+}
