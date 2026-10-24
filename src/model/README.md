@@ -8,18 +8,19 @@ The JSDoc types are in [`dungeon.js`](dungeon.js). Load saved or shared JSON wit
 
 ```json
 {
-  "version": 5,
+  "version": 6,
   "name": "Example Dungeon",
   "floors": [{ "id": "1F", "name": "Ground Floor" }],
   "rooms": [
     { "id": "r1", "floor": "1F", "label": "Entrance", "notes": { "description": "A mossy arch.", "traps": "Loose flagstone by the door." }, "contents": [{ "type": "smallKey" }, { "type": "enemy", "name": "2 bats", "emoji": "🦇" }] },
-    { "id": "r2", "floor": "1F", "label": "Chest Room", "rect": { "x": 4, "y": 0, "w": 4, "h": 3 }, "contents": [{ "type": "item", "name": "hookshot" }] }
+    { "id": "r2", "floor": "1F", "label": "Chest Room", "rect": { "x": 4, "y": 0, "w": 4, "h": 3 }, "player": { "show": ["description", "contents"] }, "contents": [{ "type": "item", "name": "hookshot" }] }
   ],
   "edges": [
     { "id": "e1", "from": "r1", "to": "r2", "kind": "door", "gate": { "type": "smallKey" } }
   ],
   "start": "r1",
-  "goal": "r2"
+  "goal": "r2",
+  "sheet": { "keys": "letters", "order": ["r2", "r1"] }
 }
 ```
 
@@ -34,10 +35,12 @@ The JSDoc types are in [`dungeon.js`](dungeon.js). Load saved or shared JSON wit
 | `rooms[].rect` | `{ x, y, w, h }` in grid units. Only the map view uses it. Optional. | Left out |
 | `rooms[].graphPos` | `{ x, y }` in pixels. Only the graph editor uses it; rooms without one are laid out on a grid. Optional. Added in version 2. | Left out |
 | `rooms[].notes` | The game master's notes: `{ description?, enemies?, traps?, treasure?, secrets?, other? }`, each free text. Not tied to any game system, and the solver ignores them. Empty notes are left out, and so is `notes` when every one is empty. Added in version 4. | Left out; unknown fields and non-text values are dropped |
+| `rooms[].player` | What the players' handout shows of the room: `{ hidden?, show? }`. `hidden: true` leaves the room off the handout, map and all. `show` lists the parts it shows, from `contents` and the note fields; without it, only the `description`. Left out when it says nothing beyond the default. Added in version 6. | Left out; unknown parts are dropped |
 | `rooms[].contents[]` | What the room holds: `{ type, name?, emoji? }`. See the rules below for the types. | `[]` |
 | `rooms[].contents[].emoji` | One emoji (or any single character) shown instead of the content's icon. Optional. Added in version 5. | Left out; kept only when it's a non-empty string, cut to its first character |
 | `edges[]` | `{ id, from, to, kind, gate, oneWay }`. | `kind` = `"door"`, `gate` = open, `oneWay` = `false` |
 | `start`, `goal` | Room ids. | `null` |
+| `sheet` | The notes sheet's settings: `{ keys?, order? }`. `keys` is `"numbers"` (1, 2, 3, the default) or `"letters"` (A, B, C). `order` lists room ids in the order the game master put them; rooms not in it follow, from the entrance outward. Optional. Added in version 6. | Left out; an unknown `keys` is dropped |
 
 ## Rules
 

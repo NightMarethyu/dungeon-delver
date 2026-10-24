@@ -5,6 +5,7 @@ import Playback from '../components/panels/Playback.jsx'
 import ResultsBanner from '../components/panels/ResultsBanner.jsx'
 import ShortcutsDialog from '../components/panels/ShortcutsDialog.jsx'
 import SidePanel from '../components/panels/SidePanel.jsx'
+import SheetWorkspace from '../components/sheet/SheetWorkspace.jsx'
 import ThemeToggle from '../components/ThemeToggle.jsx'
 import { pathEdges, playbackMarks, roomMarks } from '../components/results.js'
 import { keyBelongsTo, shortcutFor } from '../components/shortcuts.js'
@@ -23,7 +24,7 @@ import { replay, solve } from '../solver/index.js'
 const SAVE_DELAY = 400
 // Renamed when the map became the default, so the old saved default doesn't stick.
 const VIEW_KEY = 'dungeon-delver:editor-view'
-const VIEWS = { map: 'Map', graph: 'Graph' }
+const VIEWS = { map: 'Map', graph: 'Graph', sheet: 'Sheet' }
 const SAVE_STATUS = {
   saved: 'Saved in this browser',
   saving: 'Saving…',
@@ -83,7 +84,7 @@ function useAutosave(savedId, dungeon, unsaved = 'off') {
   return status
 }
 
-function Missing({ title, children }) {
+export function Missing({ title, children }) {
   return (
     <div className="app">
       <header className="app-header">
@@ -103,9 +104,10 @@ function Missing({ title, children }) {
 }
 
 /**
- * Which editor is showing, 'map' or 'graph'. Both edit the same dungeon. The
- * map is the default, as it needs no graph theory; picking the other one is
- * remembered in this browser.
+ * Which editor is showing, 'map', 'graph', or 'sheet'. All edit the same
+ * dungeon. The map is the default, as it needs no graph theory; picking the
+ * graph is remembered in this browser. The notes sheet isn't, as it's for
+ * once the dungeon is built: the builder opens on the map or graph.
  */
 function useEditorView() {
   const [view, setView] = useState(() => {
@@ -117,6 +119,7 @@ function useEditorView() {
   })
   function choose(next) {
     setView(next)
+    if (next === 'sheet') return
     try {
       window.localStorage.setItem(VIEW_KEY, next)
     } catch {
@@ -261,7 +264,12 @@ function Editor({ id, initial, shared = false, example = false }) {
   const selected =
     selection && (selection.kind === 'room' ? dungeon.rooms : dungeon.edges).some((x) => x.id === selection.id) ? selection : null
   const saveStatus = useAutosave(id, dungeon, shared ? 'shared' : example ? 'example' : 'off')
-  const [view, setView] = useEditorView()
+  const [view, chooseView] = useEditorView()
+  // The sheet has no selection, so a key like Delete can't act on a room out of sight.
+  const setView = (next) => {
+    if (next === 'sheet') setSelection(null)
+    chooseView(next)
+  }
   const Canvas = view === 'map' ? MapEditor : GraphEditor
   // Commands the canvas offers the keyboard shortcuts (see CANVAS_ACTIONS).
   const canvas = useRef(null)
@@ -403,41 +411,47 @@ function Editor({ id, initial, shared = false, example = false }) {
           </MoreMenu>
         </div>
       </header>
-      <main className="workspace">
-        <div className="canvas-column">
-          <ResultsBanner
-            dungeon={checked}
-            result={result}
-            playing={playing?.index ?? null}
-            onPlay={(index) => setPlayback({ result, index, at: 0 })}
-          />
-          {steps && (
-            <Playback
+      {view === 'sheet' ? (
+        <main className="sheet-main">
+          <SheetWorkspace dungeon={dungeon} onChange={setDungeon} />
+        </main>
+      ) : (
+        <main className="workspace">
+          <div className="canvas-column">
+            <ResultsBanner
               dungeon={checked}
-              steps={steps}
-              at={at}
-              label={result.softlocks.length > 1 ? `Softlock ${playing.index + 1} of ${result.softlocks.length}` : 'Softlock'}
-              onStep={(at) => setPlayback({ ...playing, at })}
-              onClose={() => setPlayback(null)}
+              result={result}
+              playing={playing?.index ?? null}
+              onPlay={(index) => setPlayback({ result, index, at: 0 })}
             />
-          )}
-          <Canvas
-            commands={canvas}
-            dungeon={dungeon}
-            onChange={setDungeon}
-            selection={selected}
-            onSelect={setSelection}
-            highlights={highlights}
-          />
-        </div>
-        <div className={`panel-sheet${sheetOpen ? ' open' : ''}`}>
-          <button type="button" className="sheet-toggle" aria-expanded={sheetOpen} onClick={() => setSheetOpen(!sheetOpen)}>
-            <span>{sheetTitle(dungeon, selected)}</span>
-            <span aria-hidden="true">{sheetOpen ? '▾' : '▴'}</span>
-          </button>
-          <SidePanel dungeon={dungeon} selection={selected} onChange={setDungeon} onSelect={setSelection} view={view} />
-        </div>
-      </main>
+            {steps && (
+              <Playback
+                dungeon={checked}
+                steps={steps}
+                at={at}
+                label={result.softlocks.length > 1 ? `Softlock ${playing.index + 1} of ${result.softlocks.length}` : 'Softlock'}
+                onStep={(at) => setPlayback({ ...playing, at })}
+                onClose={() => setPlayback(null)}
+              />
+            )}
+            <Canvas
+              commands={canvas}
+              dungeon={dungeon}
+              onChange={setDungeon}
+              selection={selected}
+              onSelect={setSelection}
+              highlights={highlights}
+            />
+          </div>
+          <div className={`panel-sheet${sheetOpen ? ' open' : ''}`}>
+            <button type="button" className="sheet-toggle" aria-expanded={sheetOpen} onClick={() => setSheetOpen(!sheetOpen)}>
+              <span>{sheetTitle(dungeon, selected)}</span>
+              <span aria-hidden="true">{sheetOpen ? '▾' : '▴'}</span>
+            </button>
+            <SidePanel dungeon={dungeon} selection={selected} onChange={setDungeon} onSelect={setSelection} view={view} />
+          </div>
+        </main>
+      )}
       {helpOpen && <ShortcutsDialog onClose={() => setHelpOpen(false)} />}
     </div>
   )

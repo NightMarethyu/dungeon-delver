@@ -96,3 +96,17 @@ describe('loadDungeon', () => {
     expect(codes(problems)).toEqual([code])
   })
 })
+
+describe('loadDungeon and the notes sheet', () => {
+  it('keeps what players see of a room, dropping what it does not know', () => {
+    const player = { hidden: true, show: ['secrets', 'mood', 'contents'], extra: 1 }
+    const { dungeon } = loadDungeon({ ...minimal, rooms: [{ ...minimal.rooms[0], player }, { ...minimal.rooms[1], player: { hidden: 'yes' } }] })
+    expect(dungeon.rooms[0].player).toEqual({ hidden: true, show: ['contents', 'secrets'] })
+    expect('player' in dungeon.rooms[1]).toBe(false)
+  })
+
+  it('keeps the sheet settings it knows', () => {
+    expect(loadDungeon({ ...minimal, sheet: { keys: 'letters', order: ['b', 'a', 'b'] } }).dungeon.sheet).toEqual({ keys: 'letters', order: ['b', 'a'] })
+    expect('sheet' in loadDungeon({ ...minimal, sheet: { keys: 'roman' } }).dungeon).toBe(false)
+  })
+})

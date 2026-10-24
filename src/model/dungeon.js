@@ -1,7 +1,7 @@
 // The dungeon format. Pure data, no React: both views and the solver read it.
 // See README.md in this folder for the rules behind each field.
 
-export const CURRENT_VERSION = 5
+export const CURRENT_VERSION = 6
 
 export const GATE_TYPES = ['open', 'smallKey', 'bigKey', 'item', 'puzzle']
 // What a room can hold. The keys and items change what the player can open,
@@ -19,6 +19,12 @@ export const EDGE_KINDS = ['door', 'stairs', 'drop', 'passage']
 // The game master's notes on a room, one free text box each. Not tied to any
 // game system, and the solver never reads them. `other` is the catch-all.
 export const NOTE_FIELDS = ['description', 'enemies', 'traps', 'treasure', 'secrets', 'other']
+// What the players' handout can show of a room: its contents and each note.
+// A room shows only its description unless the game master picks more.
+export const PLAYER_PARTS = ['contents', ...NOTE_FIELDS]
+export const DEFAULT_PLAYER_PARTS = ['description']
+// How the notes sheet labels its rooms: 1, 2, 3 or A, B, C.
+export const KEY_STYLES = ['numbers', 'letters']
 
 /**
  * @typedef {{ id: string, name: string }} Floor
@@ -28,7 +34,11 @@ export const NOTE_FIELDS = ['description', 'enemies', 'traps', 'treasure', 'secr
  * @typedef {ContentKind & { emoji?: string }} Content  `emoji` replaces the drawn icon
  * @typedef {{ x: number, y: number }} Point
  * @typedef {Partial<Record<'description' | 'enemies' | 'traps' | 'treasure' | 'secrets' | 'other', string>>} RoomNotes
- * @typedef {{ id: string, floor: string, label: string, rect?: Rect, graphPos?: Point, notes?: RoomNotes, contents: Content[] }} Room
+ * @typedef {{ hidden?: true, show?: string[] }} PlayerView  what the handout shows of a room:
+ *   nothing when `hidden`, otherwise the parts in `show` (DEFAULT_PLAYER_PARTS when left out)
+ * @typedef {{ id: string, floor: string, label: string, rect?: Rect, graphPos?: Point, notes?: RoomNotes, player?: PlayerView, contents: Content[] }} Room
+ * @typedef {{ keys?: 'numbers' | 'letters', order?: string[] }} SheetSettings  the notes sheet's
+ *   room labels, and the room ids in the order the game master put them
  * @typedef {{ type: 'open' } | { type: 'smallKey' } | { type: 'bigKey' } | { type: 'item', name: string } | { type: 'puzzle', at?: string }} Gate
  * @typedef {{ id: string, from: string, to: string, kind: string, gate: Gate, oneWay: boolean }} Edge
  * @typedef {{
@@ -39,6 +49,7 @@ export const NOTE_FIELDS = ['description', 'enemies', 'traps', 'treasure', 'secr
  *   edges: Edge[],
  *   start: string | null,
  *   goal: string | null,
+ *   sheet?: SheetSettings,
  * }} Dungeon
  */
 
@@ -53,4 +64,9 @@ export function emptyDungeon(name = 'Untitled Dungeon') {
     start: null,
     goal: null,
   }
+}
+
+/** The parts of `room` the players' handout shows (see PlayerView). */
+export function playerParts(room) {
+  return room.player?.show ?? DEFAULT_PLAYER_PARTS
 }

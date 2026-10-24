@@ -21,6 +21,8 @@ It's a static site on GitHub Pages, with no accounts and no server: dungeons are
 
 - **Lay out the dungeon as a map.** The builder opens on the map: one floor at a time, with rooms as rectangles on a snap grid. Drag rooms to move them, drag a corner to resize, and double-click the grid to add a room. Rooms connected on the same floor sit side by side with a door in their shared wall, marked with its lock's icon. Stairs and holes to other floors show inside their room, with arrows for one-way stairs; click one to jump to the room it leads to. Add a door by clicking the **+** on a shared wall or dragging the arrow in a selected room's corner onto another room, and when you put a room against another the map offers to add one. Rooms that have never been on the map are placed automatically, beside the rooms they connect to.
 - **Room notes for the game master.** Each room has boxes for its description, enemies, traps and hazards, treasure, and hidden details, plus a plain notes box for anything else. They're free text and not tied to any game system, so stat blocks, DCs, or rolls from whatever game you run all fit. They travel with the dungeon in saves and share links.
+- **A notes sheet to run the game from.** Switch to **Sheet** for a page with a small map of each floor, its rooms labeled 1, 2, 3 (or A, B, C), and each room's notes listed beside its label in order. Type right on the page; what you see is what prints, or saves as a PDF. Rooms are listed from the entrance outward, and the arrows reorder them.
+- **Player handouts.** Every room and every note on the sheet has an eye that picks whether the players see it. Hide a secret room and it's gone from their map too. The **Players** tab shows the handout as they'll get it, ready to print, and "Copy players' link" makes a read-only link that holds only what they may see, so the secrets aren't hiding in it.
 - **More in a room than keys.** Besides small keys, the big key, and items, a room can hold treasure, enemies, traps, puzzles, characters, or a custom thing you name yourself, each with an optional detail like "3 goblins". These are for the game master: the solver ignores them, so they never lock anything. Any content's icon can be swapped for an emoji, picked from a list or typed in; the drawn icons stay the default.
 - **Puzzle locks.** A connection can be locked by a puzzle solved inside one of its rooms, like a shutter that opens once you solve the room. It opens from that side only, then stays open both ways, so the solver can tell when a drop or a key choice leaves the player on the wrong side. A puzzle on the door itself (like a lockpicking minigame) can be solved from either side.
 - **Or build it as a graph.** Switch from Map to Graph to add, rename, move, and delete rooms as nodes, and drag between them to connect them. The side panel edits a room's contents (small keys, the big key, named items) or a connection's lock (small key, big key, item, puzzle) and kind (door, stairs, drop, passage, one-way). Pick the start and goal rooms, and sort rooms into floors.
@@ -39,6 +41,10 @@ It's a static site on GitHub Pages, with no accounts and no server: dungeons are
 ![The map view of the Sunken Cistern's lower floor in the dark theme, with the critical path highlighted and lock icons on the doors](docs/screenshots/map-view.png)
 
 ![Playing back a softlock on the map: the wasted key leaves the player stuck on both floors](docs/screenshots/softlock-playback.png)
+
+![The notes sheet for the Sunken Cistern: a small map with numbered rooms, and each room's notes beside its number, with eyes picking what players see](docs/screenshots/notes-sheet.png)
+
+![The players' handout of the same dungeon: the hidden storeroom is gone from the map, and only the descriptions show](docs/screenshots/player-handout.png)
 
 ![Live results on the graph view of the Sunken Cistern](docs/screenshots/live-results.png)
 
@@ -77,8 +83,8 @@ The solver is tested against small hand-made dungeons in `src/solver/__fixtures_
 The solver stays the core, but the tool grows from checking Zelda-style dungeons into building dungeons to run at the table. Planned, roughly in order:
 
 - **Your own locks and items** (started): rooms can hold treasure, enemies, traps, puzzles, characters, and custom things, and any of them can show an emoji instead of the drawn icon. Lock and item types are already data, not hard-coded Zelda rules, so a later settings screen can let a table rename them (a "resource" instead of a small key, a "capability" instead of an item) and add their own locks.
-- **Room notes** (started): description, enemies, traps, treasure, hidden details, and free notes for each room are in. More to come.
-- **Game master and player views.** Hide secret doors, notes, and unvisited rooms from the player view.
+- **Room notes** (started): description, enemies, traps, treasure, hidden details, and free notes for each room are in, with a printable notes sheet keyed to a small map. More to come.
+- **Game master and player views** (started): the sheet's player handout hides the rooms and notes the game master picks. Still to come: secret doors, and a player view of the map itself.
 - **Switches and state.** Levers, crystal switches, and water levels that open and close more than one way, as flags in the solver's state.
 - **Map export** as an image or a printable page.
 - **A generator** that only produces dungeons that can be beaten without softlocks.
@@ -112,8 +118,9 @@ It's built with React 19 and Vite. The graph editor uses [React Flow](https://re
 | `src/components/icons/` | Loads the drawings and recolors them for the theme (`parse.js`), and picks which icon stands for which lock, item, or passage (`icons.js`) |
 | `src/components/panels/` | The side panel (selected room or connection, or the dungeon's start, goal, and floors), the solver results banner, and softlock playback |
 | `src/components/results.js` | Turns solver results into banner text, highlights, and playback marks |
-| `src/pages/` | The landing page and the builder |
-| `src/routing.js` | Hash routing (`#/`, `#/edit/<id>`, `#/share/<data>`), so every page works on GitHub Pages |
+| `src/components/sheet/` | The notes sheet and player handout: room order, keys, and what players see (`sheet.js`), the small map (`SheetMap.jsx`), and the page itself |
+| `src/pages/` | The landing page, the builder, and the read-only player handout |
+| `src/routing.js` | Hash routing (`#/`, `#/edit/<id>`, `#/share/<data>`, `#/handout/<data>`), so every page works on GitHub Pages |
 | `src/storage/` | Saved dungeons in `localStorage`, share links, and JSON export |
 | `src/examples/` | The example dungeons on the front page, with tests that they show what their blurbs promise |
 | `docs/screenshots/` | Screenshots for this README |
